@@ -152,11 +152,10 @@ if __name__=="__main__":
                 job_type = "reco/topoClusters/electronicsNoise/calibrated" 
             else:
                 job_type = "reco/topoClusters/electronicsNoise" 
+        elif  '--calibrate' in sys.argv:
+            job_type = "reco/topoClusters/noNoise/calibrated"
         else:
-            if  '--calibrate' in sys.argv:
-                job_type = "reco/topoClusters/noNoise/calibrated"
-            else:
-                job_type = "reco/topoClusters/noNoise/calibrated"
+            job_type = "reco/topoClusters/noNoise"
         short_job_type = "recTopo"
     elif '--ntuple' in sys.argv:
         default_options = 'config/recPositions.py'
@@ -393,6 +392,8 @@ if __name__=="__main__":
             common_fccsw_command += ' --seed %i'%(seed)
         if args.noise:
             common_fccsw_command += ' --addElectronicsNoise'
+        if args.calibrate:
+            common_fccsw_command += ' --calibrate'
         if args.physics:
             common_fccsw_command += ' --physics'
         print '-------------------------------------'
@@ -456,16 +457,21 @@ if __name__=="__main__":
             frun.write('python %s/Convert_Jan.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
         if '--recTopoClusters' in sys.argv:
-            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+os.path.basename(outfile) ))
+            if '--calibrate' in sys.argv:
+                frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+os.path.basename(outfile) ))
+                frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
             frun.write('python %s/Convert.py $JOBDIR/%s $JOBDIR/%s \n'%(current_dir,outfile,outfile+'_ntuple.root'))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile+'_ntuple.root',outdir))
         if '--pileup' in sys.argv:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
-        if '--mergeMinBias' in sys.argv:
-            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/output_pileupOverlay.root %s_merged_%sev.root\n'%( outdir+os.path.basename(outfile), num_events ))
+       
+        if not '--mergeMinBias' in sys.argv:
+            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
+            frun.write('rm $JOBDIR/%s \n'%(outfile))
+        else:
+            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/output_pileupOverlay.root %s_merged_%sev.root\n'%( (outdir+'/'+outfile), num_events ))
+            frun.write('rm $JOBDIR/output_pileupOverlay.root \n')
             
-        frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
-        frun.write('rm $JOBDIR/%s \n'%(outfile))
         frun.close()
        
         if args.lsf:

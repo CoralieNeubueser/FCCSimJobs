@@ -1,4 +1,4 @@
-import argparse, os
+import argparse, os, math
 simparser = argparse.ArgumentParser()
 
 simparser.add_argument('--inNames', nargs='+', help='Names of the input files', required=True)
@@ -16,8 +16,10 @@ output_name = simargs.outName
 
 newList = []
 for ifile in All_pileupfilenames:
-    infile = ifile.replace(',','')
-    newList.append(infile)
+    infile1 = ifile.replace(',', ' ')
+    infile2 = infile1.replace('[', ' ')
+    infile3 = infile2.replace(']', ' ')
+    newList.append(infile3)
     
 print "number of events = ", num_events
 print "input file names: ", newList
@@ -99,6 +101,20 @@ ECalhitsmergetool.pileupHitsBranch = ecalBarrelCellsName
 ECalhitsmergetool.signalHits = ecalBarrelCellsName
 # branchnames for the output
 ECalhitsmergetool.mergedHits = "overlaidECalBarrelCells"
+ECalEChitsmergetool = PileupCaloCellMergeTool("MyECalECHitMergeTool")
+# branchnames for the pileup
+ECalEChitsmergetool.pileupHitsBranch = ecalEndcapCellsName
+# branchnames for the signal
+ECalEChitsmergetool.signalHits = ecalEndcapCellsName
+# branchnames for the output
+ECalEChitsmergetool.mergedHits = "overlaidECalEndcapsCells"
+ECalFwdhitsmergetool = PileupCaloCellMergeTool("MyECalFwdHitMergeTool")
+# branchnames for the pileup
+ECalFwdhitsmergetool.pileupHitsBranch = ecalFwdCellsName
+# branchnames for the signal
+ECalFwdhitsmergetool.signalHits = ecalFwdCellsName
+# branchnames for the output
+ECalFwdhitsmergetool.mergedHits = "overlaidECalFwdCells"
 
 HCalhitsmergetool = PileupCaloCellMergeTool("MyHCalHitMergeTool")
 # branchnames for the pileup
@@ -107,11 +123,32 @@ HCalhitsmergetool.pileupHitsBranch = hcalBarrelCellsName
 HCalhitsmergetool.signalHits = hcalBarrelCellsName
 # branchnames for the output
 HCalhitsmergetool.mergedHits = "overlaidHCalBarrelCells"
+HCalExthitsmergetool = PileupCaloCellMergeTool("MyHCalExtHitMergeTool")
+# branchnames for the pileup
+HCalExthitsmergetool.pileupHitsBranch = hcalExtBarrelCellsName
+# branchnames for the signal
+HCalExthitsmergetool.signalHits = hcalExtBarrelCellsName
+# branchnames for the output
+HCalExthitsmergetool.mergedHits = "overlaidHCalExtBarrelCells"
+HCalEChitsmergetool = PileupCaloCellMergeTool("MyHCalECHitMergeTool")
+# branchnames for the pileup
+HCalEChitsmergetool.pileupHitsBranch = hcalEndcapCellsName
+# branchnames for the signal
+HCalEChitsmergetool.signalHits = hcalEndcapCellsName
+# branchnames for the output
+HCalEChitsmergetool.mergedHits = "overlaidHCalEndcapCells"
+HCalFwdhitsmergetool = PileupCaloCellMergeTool("MyHCalFwdHitMergeTool")
+# branchnames for the pileup
+HCalFwdhitsmergetool.pileupHitsBranch = hcalFwdCellsName
+# branchnames for the signal
+HCalFwdhitsmergetool.signalHits = hcalFwdCellsName
+# branchnames for the output
+HCalFwdhitsmergetool.mergedHits = "overlaidHCalFwdCells"
 
 
 # use the pileuptool to specify the number of pileup
 from Configurables import ConstPileUp
-pileuptool = ConstPileUp("MyPileupTool", numPileUpEvents=10)
+pileuptool = ConstPileUp("MyPileupTool", numPileUpEvents=num_events)
 
 # algorithm for the overlay
 from Configurables import PileupOverlayAlg
@@ -120,8 +157,14 @@ overlay.pileupFilenames = pileupFilenames
 overlay.randomizePileup = False
 overlay.noSignal = True
 overlay.mergeTools = [
-                      "PileupCaloHitMergeTool/MyECalHitMergeTool",
-                      "PileupCaloHitMergeTool/MyHCalHitMergeTool"]
+                      "PileupCaloCellMergeTool/MyECalHitMergeTool",
+#                      "PileupCaloCellMergeTool/MyECalECHitMergeTool",
+#                      "PileupCaloCellMergeTool/MyECalFwdHitMergeTool",
+                      "PileupCaloCellMergeTool/MyHCalHitMergeTool",
+#                      "PileupCaloCellMergeTool/MyHCalExtHitMergeTool",
+#                      "PileupCaloCellMergeTool/MyHCalECHitMergeTool",
+#                      "PileupCaloCellMergeTool/MyHCalFwdHitMergeTool",
+                      ]
 overlay.PileUpTool = pileuptool
 
 ################################################################
@@ -130,7 +173,7 @@ overlay.PileUpTool = pileuptool
 
 out = PodioOutput("out", 
                   OutputLevel=INFO)
-out.outputCommands = ["keep *"]
+out.outputCommands = ["keep *", "drop ECalBarrelCells", "drop HCalBarrelCells", "drop HCalExtBarrelCells", "drop ECalEndcapCells", "drop HCalEndcapCells", "drop ECalFwdCells", "drop HCalFwdCells", "drop TailCatcherCells" ]
 out.filename = "output_pileupOverlay.root"
 
 #CPU information
@@ -146,7 +189,8 @@ ApplicationMgr(
         out
         ],
     EvtSel = 'NONE',
-    EvtMax   = int(num_events),
+    # input are 10 files, assuming every file has 100events 
+    EvtMax   = math.floor(10*100/float(num_events)),
     ExtSvc = [podioevent, geoservice, audsvc],
  )
 

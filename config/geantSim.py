@@ -10,6 +10,7 @@ simparser.add_argument('--outName', type=str, help='Name of the output file', re
 genTypeGroup = simparser.add_mutually_exclusive_group(required = True) # Type of events to generate
 genTypeGroup.add_argument("--singlePart", action='store_true', help="Single particle events")
 genTypeGroup.add_argument("--pythia", action='store_true', help="Events generated with Pythia")
+genTypeGroup.add_argument("--useVertexSmearTool", action='store_true', help="Use the Gaudi Vertex Smearing Tool")
 
 from math import pi
 singlePartGroup = simparser.add_argument_group('Single particles')
@@ -72,10 +73,11 @@ print "=================================="
 
 
 from Gaudi.Configuration import *
+from GaudiKernel import SystemOfUnits as units
 ##############################################################################################################
 #######                                         GEOMETRY                                         #############
 ##############################################################################################################
-path_to_detector = '/afs/cern.ch/work/h/helsens/public/FCCsoft/FCCSW-0.8.3/'
+path_to_detector = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj"
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
@@ -96,9 +98,9 @@ ecalBarrelReadoutNamePhiEta = "ECalBarrelPhiEta"
 ecalEndcapReadoutName = "EMECPhiEta"
 ecalFwdReadoutName = "EMFwdPhiEta"
 # HCAL readouts
-hcalBarrelReadoutName = "BarHCal_Readout"
+hcalBarrelReadoutName = "HCalBarrelReadout"
 hcalBarrelReadoutNamePhiEta = hcalBarrelReadoutName + "_phieta"
-hcalExtBarrelReadoutName = "ExtBarHCal_Readout"
+hcalExtBarrelReadoutName = "HCalExtBarrelReadout"
 hcalExtBarrelReadoutNamePhiEta = hcalExtBarrelReadoutName + "_phieta"
 hcalEndcapReadoutName = "HECPhiEta"
 hcalFwdReadoutName = "HFwdPhiEta"
@@ -124,7 +126,12 @@ geantservice = SimG4Svc("SimG4Svc", detector='SimG4DD4hepDetector', physicslist=
 # range cut
 geantservice.g4PostInitCommands += ["/run/setCut 0.1 mm"]
 
-from Configurables import SimG4Alg, SimG4SaveCalHits, SimG4SingleParticleGeneratorTool
+from Configurables import SimG4Alg, SimG4SaveCalHits, SimG4SingleParticleGeneratorTool, SimG4SaveTrackerHits
+
+savetrackertool = SimG4SaveTrackerHits("saveTrackerHits", readoutNames = ["TrackerBarrelReadout", "TrackerEndcapReadout"]) 
+savetrackertool.positionedTrackHits.Path = "TrackerPositionedHits"
+savetrackertool.trackHits.Path = "TrackerHits"
+savetrackertool.digiTrackHits.Path = "TrackerDigiPostPoint"
 saveecaltool = SimG4SaveCalHits("saveECalBarrelHits",readoutNames = [ecalBarrelReadoutName])
 saveecaltool.positionedCaloHits.Path = "ECalBarrelPositionedHits"
 saveecaltool.caloHits.Path = "ECalBarrelHits"
@@ -152,7 +159,7 @@ savetailcatchertool.positionedCaloHits = "TailCatcherPositionedHits"
 savetailcatchertool.caloHits = "TailCatcherHits"
 outputHitsTools += ["SimG4SaveCalHits/saveECalEndcapHits","SimG4SaveCalHits/saveECalFwdHits",
                     "SimG4SaveCalHits/saveHCalExtBarrelHits", "SimG4SaveCalHits/saveHCalEndcapHits",
-                    "SimG4SaveCalHits/saveHCalFwdHits", "SimG4SaveCalHits/saveTailCatcherHits"]
+                    "SimG4SaveCalHits/saveHCalFwdHits", "SimG4SaveCalHits/saveTailCatcherHits", "SimG4SaveTrackerHits/saveTrackerHits"]
 
 geantsim = SimG4Alg("SimG4Alg", outputs = outputHitsTools)
 
@@ -171,9 +178,16 @@ if simargs.singlePart:
                                               etaMin=etaMin, etaMax=etaMax, phiMin = phiMin, phiMax = phiMax)
         geantsim.eventProvider = pgun
 else:
-    from Configurables import PythiaInterface, GenAlg
+    from Configurables import PythiaInterface, GenAlg, GaussSmearVertex
+    smeartool = GaussSmearVertex("GaussSmearVertex")
+    if simargs.useVertexSmearTool:
+      smeartool.xVertexSigma = 0.5*units.mm
+      smeartool.yVertexSigma = 0.5*units.mm
+      smeartool.zVertexSigma = 40*units.mm
+      smeartool.tVertexSigma = 180*units.picosecond
+
     pythia8gentool = PythiaInterface("Pythia8",Filename=card)
-    pythia8gen = GenAlg("Pythia8", SignalProvider=pythia8gentool)
+    pythia8gen = GenAlg("Pythia8", SignalProvider=pythia8gentool, VertexSmearingTool=smeartool)
     pythia8gen.hepmc.Path = "hepmc"
     from Configurables import HepMCToEDMConverter
     hepmc_converter = HepMCToEDMConverter("Converter")
@@ -194,7 +208,7 @@ else:
 # Magnetic field
 from Configurables import SimG4ConstantMagneticFieldTool
 if magnetic_field:
-    field = SimG4ConstantMagneticFieldTool("bField", FieldOn=True, IntegratorStepper="ClassicalRK4")
+    field = SimG4ConstantMagneticFieldTool("bField", FieldOn=True, FieldZMax=20*units.m, IntegratorStepper="ClassicalRK4")
 else:
     field = SimG4ConstantMagneticFieldTool("bField", FieldOn=False)
 
@@ -333,6 +347,9 @@ out = PodioOutput("out")
 out.outputCommands = ["drop *",
                       "keep GenParticles",
                       "keep GenVertices",
+                      "keep TrackerHits",
+                      "keep TrackerPositionedHits",
+                      "keep TrackerDigiPostPoint",
                       "keep ECalBarrelCells",
                       "keep ECalEndcapCells",
                       "keep ECalFwdCells",

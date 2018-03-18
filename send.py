@@ -405,6 +405,9 @@ if __name__=="__main__":
         frun.write('unset PYTHONPATH\n')
         frun.write('export JOBDIR=$PWD\n')
         frun.write('source %s\n' % (path_to_INIT))
+        # workaround for pythia 8 version mismatch
+        frun.write("export PYTHIA8_XML=/cvmfs/sft.cern.ch/lcg/releases/MCGenerators/pythia8/230-b1563/x86_64-slc6-gcc62-opt/share/Pythia8/xmldoc/\n")
+        frun.write("export PYTHIA8DATA=$PYTHIA8_XML\n")
 
         # set options to run FCCSW
         common_fccsw_command = '%s/run fccrun.py %s --outName $JOBDIR/%s --numEvents %i'%(path_to_FCCSW,job_options, outfile ,num_events)

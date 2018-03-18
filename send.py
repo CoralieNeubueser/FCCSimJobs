@@ -130,6 +130,7 @@ if __name__=="__main__":
     jobTypeGroup.add_argument("--recPositions", action='store_true', help="Generate positions of cells with deposited energy")
     jobTypeGroup.add_argument("--recSlidingWindow", action='store_true', help="Reconstruction with sliding window")
     jobTypeGroup.add_argument("--recTopoClusters", action='store_true', help="Reconstruction with topo-clusters")
+    jobTypeGroup.add_argument("--recPileupTopoClusters", action='store_true', help="Reconstruction with topo-clusters with pile-up thresholds")
     jobTypeGroup.add_argument("--ntuple", action='store_true', help="Conversion to ntuple")
     jobTypeGroup.add_argument("--pileup", action='store_true', help="Analyse min bias events for pile-up noise per cell")
     jobTypeGroup.add_argument("--mergeMinBias", action='store_true', help="Merge min bias events for pile-up study")
@@ -175,6 +176,10 @@ if __name__=="__main__":
         default_options = 'config/mergeMinBias.py'
         job_type = "ana/merged" 
         short_job_type = "mergeMinBias"
+    elif '--recPileupTopoClusters' in sys.argv:
+        default_options = 'config/recPileupTopoClusters.py'
+        job_type = "reco/topoClustersPileup" 
+        short_job_type = "recTopoPileup"
     elif '--trackerPerformance' in sys.argv:
         default_options = 'config/geantSim_trackerPerformance.py'
         sim = True

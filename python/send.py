@@ -311,7 +311,7 @@ if __name__=="__main__":
         print card
         print os.path.isfile(card)
 
-    # number of jobs is number of files
+    seed=''
     for i in xrange(num_jobs):
         if sim:
             seed=ut.getuid()
@@ -338,7 +338,7 @@ if __name__=="__main__":
         if args.physics:
             frunname = 'job_%s_%s_%s.sh'%(short_job_type,process,str(seed))
         else:
-            frunname = 'job_%s_%s_%dGeV_eta%s_%s.sh'%(short_job_type,particle_human_names[pdg],energy,str(decimal.Decimal(str(etaMax)).normalize()),uniqueID)
+            frunname = 'job_%s_%s_%dGeV_eta%s_%s.sh'%(short_job_type,particle_human_names[pdg],energy,str(decimal.Decimal(str(etaMax)).normalize()),str(seed))
 
         os.system("mkdir -p %s"%logdir)
         frun = None
@@ -484,9 +484,9 @@ if __name__=="__main__":
             commands.getstatusoutput('chmod 777 %s/%s'%(logdir,fsubname))
             fsub.write('executable            = %s/%s\n' %(logdir,frunname))
             fsub.write('arguments             = $(ClusterID) $(ProcId)\n')
-            fsub.write('output                = %s/out/job.%s.$(ClusterId).$(ProcId).out\n'%(logdir,uniqueID))
-            fsub.write('log                   = %s/log/job.%s.$(ClusterId).log\n'%(logdir,uniqueID))
-            fsub.write('error                 = %s/err/job.%s.$(ClusterId).$(ProcId).err\n'%(logdir,uniqueID))
+            fsub.write('output                = %s/out/job.%s.$(ClusterId).$(ProcId).out\n'%(logdir,str(seed)))
+            fsub.write('log                   = %s/log/job.%s.$(ClusterId).log\n'%(logdir,str(seed)))
+            fsub.write('error                 = %s/err/job.%s.$(ClusterId).$(ProcId).err\n'%(logdir,str(seed)))
             if args.physics:
                 fsub.write('RequestCpus = 8\n')
             else:

@@ -1,7 +1,7 @@
 path_to_INIT = '/cvmfs/fcc.cern.ch/sw/views/releases/0.9.1/x86_64-slc6-gcc62-opt/setup.sh'
 path_to_LHE = '/afs/cern.ch/work/h/helsens/public/FCCsoft/FlatGunLHEventProducer/'
 path_to_FCCSW = '/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj'
-version = 'v02'
+version = 'v03'
 import glob, os, sys,subprocess,cPickle
 import commands
 import time
@@ -113,13 +113,13 @@ if __name__=="__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--local', type=str, help='Use local FCCSW installation, need to provide a file with path_to_INIT and or path_to_FCCSW')
-    parser.add_argument('--version', type=str, default = "v01", help='Specify the version of FCCSimJobs')
+    parser.add_argument('--version', type=str, default = "v02", help='Specify the version of FCCSimJobs')
 
     parser.add_argument("--bFieldOff", action='store_true', help="Switch OFF magnetic field (default: B field ON)")
     parser.add_argument("--pythiaSmearVertex", action='store_true', help="Write vertex smearing parameters to pythia config file")
     parser.add_argument("--no_eoscopy", action='store_true',  help="DON'T copy result files to eos")
 
-    parser.add_argument('-n','--numEvents', type=int, help='Number of simulation events per job', required='--recPositions' not in sys.argv and '--recSlidingWindow' not in sys.argv and '--recTopoClusters' not in sys.argv and '--ntuple' not in sys.argv and '--pileup' not in sys.argv and '--mergeMinBias' not in sys.argv)
+    parser.add_argument('-n','--numEvents', type=int, help='Number of simulation events per job', required='--recPositions' not in sys.argv and '--recSlidingWindow' not in sys.argv and '--recLayerWiseSlidingWindow' not in sys.argv and '--recTopoClusters' not in sys.argv and '--ntuple' not in sys.argv and '--pileup' not in sys.argv and '--mergeMinBias' not in sys.argv)
     parser.add_argument('-N','--numJobs', type=int, default = 10, help='Number of jobs to submit')
     parser.add_argument('-o','--output', type=str, help='Path of the output on EOS', default="/eos/experiment/fcc/hh/simulation/samples/")
     parser.add_argument('-l','--log', type=str, help='Path of the logs', default = "BatchOutputs/")
@@ -129,6 +129,7 @@ if __name__=="__main__":
     jobTypeGroup.add_argument("--sim", action='store_true', help="Simulation (default)")
     jobTypeGroup.add_argument("--recPositions", action='store_true', help="Generate positions of cells with deposited energy")
     jobTypeGroup.add_argument("--recSlidingWindow", action='store_true', help="Reconstruction with sliding window")
+    jobTypeGroup.add_argument("--recLayerWiseSlidingWindow", action='store_true', help="Reconstruction with sliding window in each calo layer")
     jobTypeGroup.add_argument("--recTopoClusters", action='store_true', help="Reconstruction with topo-clusters")
     jobTypeGroup.add_argument("--recPileupTopoClusters", action='store_true', help="Reconstruction with topo-clusters with pile-up thresholds")
     jobTypeGroup.add_argument("--ntuple", action='store_true', help="Conversion to ntuple")
@@ -164,6 +165,10 @@ if __name__=="__main__":
         else:
             job_type = "reco/topoClusters/noNoise"
         short_job_type = "recTopo"
+    elif '--recLayerWiseSlidingWindow' in sys.argv:
+        default_options = 'config/recLayerWiseSlidingWindow.py'
+        job_type = "reco/slidingWindowPerLayer/"
+        short_job_type = "recLayerWin"
     elif '--ntuple' in sys.argv:
         default_options = 'config/recPositions.py'
         job_type = "ntup"
@@ -465,7 +470,7 @@ if __name__=="__main__":
                     frun.write('%s  --singlePart --particle %i -e %i --etaMin %f --etaMax %f --phiMin %f --phiMax %f --flat \n'%(common_fccsw_command, pdg, energy, etaMin, etaMax, phiMin, phiMax))
                 else:
                     frun.write('%s  --singlePart --particle %i -e %i --etaMin %f --etaMax %f --phiMin %f --phiMax %f\n'%(common_fccsw_command, pdg, energy, etaMin, etaMax, phiMin, phiMax))
-                
+                    
         else:
             if not '--mergeMinBias' in sys.argv:
                 frun.write('cd $JOBDIR\n')
@@ -486,16 +491,16 @@ if __name__=="__main__":
         if '--recPositions' in sys.argv:
             frun.write('python %s/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
-        if '--ntuple' in sys.argv:
+        elif '--ntuple' in sys.argv:
             frun.write('python %s/Convert_Jan.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
-        if '--recTopoClusters' in sys.argv:
+        elif '--recTopoClusters' in sys.argv:
             if '--calibrate' in sys.argv:
                 frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+os.path.basename(outfile) ))
                 frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
             frun.write('python %s/Convert.py $JOBDIR/%s $JOBDIR/%s \n'%(current_dir,outfile,outfile+'_ntuple.root'))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile+'_ntuple.root',outdir))
-        if '--pileup' in sys.argv:
+        elif '--pileup' in sys.argv:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
        
         if not '--mergeMinBias' in sys.argv:

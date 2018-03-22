@@ -25,7 +25,7 @@ calib = simargs.calibrate
 print "number of events = ", num_events
 print "input name: ", input_name
 print "output name: ", output_name
-print "electronic noise in Barrel: ", noise
+print "electronic noise in Barrel: ", elNoise
 print "calibrate clusters: ", calib
 
 from Gaudi.Configuration import *
@@ -272,7 +272,8 @@ if elNoise:
                                                     readoutHCal = hcalBarrelReadoutVolume,
                                                     positionsECalTool = ECalBcells,
                                                     positionsHCalTool = HCalBcellVols,
-                                                    ehECal = 1.6,
+                                                    calibrate = False,
+                                                    ehECal = 1.,
                                                     ehHCal = 1.1,
                                                     fractionECal = 0.8,
                                                     OutputLevel = DEBUG)
@@ -418,7 +419,8 @@ if puNoise:
                                                     readoutHCal = hcalBarrelReadoutVolume,
                                                     positionsECalTool = ECalBcells,
                                                     positionsHCalTool = HCalBcellVols,
-                                                    ehECal = 1.6,
+                                                    calibrate = False,
+                                                    ehECal = 1.,
                                                     ehHCal = 1.1,
                                                     fractionECal = 0.8,
                                                     OutputLevel = DEBUG)
@@ -514,7 +516,8 @@ if (calib) :
                                            readoutHCal = hcalBarrelReadoutVolume,
                                            positionsECalTool = ECalBcells,
                                            positionsHCalTool = HCalBcellVols,
-                                           ehECal = 1.6,
+                                           calibrate = False,
+                                           ehECal = 1.,
                                            ehHCal = 1.1,
                                            fractionECal = 0.8,
                                            OutputLevel = DEBUG)
@@ -559,7 +562,7 @@ out = PodioOutput("out", OutputLevel=DEBUG)
 out.outputCommands = ["drop *", "keep GenParticles", "keep GenVertices", "keep caloClustersBarrel", "keep calibCaloClustersBarrel", "keep calibCaloClusterBarrelCells", "keep calibCaloClusterBarrelCellPositions"]
 out.filename = output_name
 
-if noise:
+if elNoise:
     out.outputCommands += ["keep caloClustersBarrelNoise","keep calibCaloClustersBarrelNoise", "keep caloClusterBarrelNoiseCells",  "keep calibCaloClusterBarrelNoiseCells", "keep caloClusterBarrelCellPositions", "keep calibCaloClusterBarrelCellPositions"]
 out.filename = output_name
 
@@ -578,7 +581,7 @@ list_of_algorithms = [podioinput,
                       recreateEcalBarrelCells,
                       createemptycells]
 
-if noise:
+if elNoise:
     list_of_algorithms += [createEcalBarrelCells, createHcalBarrelCells, createTopoClustersNoise]
     if calib:
         list_of_algorithms += [calibrateClustersNoise, positionsCalibClusterBarrelNoise]

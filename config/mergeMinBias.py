@@ -30,8 +30,7 @@ from Gaudi.Configuration import *
 #######                                         GEOMETRY                                         #############
 ##############################################################################################################
 
-path_to_detector = '/afs/cern.ch/work/c/cneubuse/public/TopoClusters/FCCSW/'
-#'/afs/cern.ch/work/h/helsens/public/FCCsoft/FCCSW-0.8.3/'
+path_to_detector = '/afs/cern.ch/work/h/helsens/public/FCCsoft/FCCSW-0.8.3/'
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
@@ -54,17 +53,6 @@ hcalBarrelCellsName = "HCalBarrelCells"
 hcalExtBarrelCellsName = "HCalExtBarrelCells"
 hcalEndcapCellsName = "HCalEndcapCells"
 hcalFwdCellsName = "HCalFwdCells"
-# Readouts
-ecalBarrelReadoutName = "ECalBarrelPhiEta"
-ecalEndcapReadoutName = "EMECPhiEta"
-ecalFwdReadoutName = "EMFwdPhiEta"
-hcalBarrelReadoutName = "BarHCal_Readout_phieta"
-hcalBarrelReadoutVolume = "HCalBarrelReadout"
-hcalExtBarrelReadoutName = "ExtBarHCal_Readout"
-hcalExtBarrelReadoutVolume = "HCalExtBarrelReadout"
-hcalEndcapReadoutName = "HECPhiEta"
-hcalFwdReadoutName = "HFwdPhiEta"
-tailCatcherReadoutName = "Muons_Readout"
 
 ##############################################################################################################
 #######                                        INPUT                                             #############
@@ -160,7 +148,7 @@ overlay.mergeTools = [
                       "PileupCaloCellMergeTool/MyECalHitMergeTool",
 #                      "PileupCaloCellMergeTool/MyECalECHitMergeTool",
 #                      "PileupCaloCellMergeTool/MyECalFwdHitMergeTool",
-                      "PileupCaloCellMergeTool/MyHCalHitMergeTool",
+                      "PileupCaloCellMergeTool/MyHCalHitMergeTool"
 #                      "PileupCaloCellMergeTool/MyHCalExtHitMergeTool",
 #                      "PileupCaloCellMergeTool/MyHCalECHitMergeTool",
 #                      "PileupCaloCellMergeTool/MyHCalFwdHitMergeTool",
@@ -192,5 +180,6 @@ ApplicationMgr(
     # input are 10 files, assuming every file has 100events 
     EvtMax   = math.floor(10*100/float(num_events)),
     ExtSvc = [podioevent, geoservice, audsvc],
+    OutputLevel = VERBOSE
  )
 

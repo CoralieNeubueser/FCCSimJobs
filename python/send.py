@@ -77,7 +77,9 @@ if __name__=="__main__":
     jobTypeGroup.add_argument("--pileup", action='store_true', help="Analyse min bias events for pile-up noise per cell")
     jobTypeGroup.add_argument("--mergeMinBias", action='store_true', help="Merge min bias events for pile-up study")
     jobTypeGroup.add_argument("--trackerPerformance", action='store_true', help="Tracker-only performance studies")
+
     parser.add_argument("--noise", action='store_true', help="Add electronics noise")
+    parser.add_argument("--addPileupNoise", action='store_true', help="Add pile-up noise")
     parser.add_argument("--calibrate", action='store_true', help="Calibrate Topo-cluster")
 
     parser.add_argument("--tripletTracker", action="store_true", help="Use triplet tracker layout instead of baseline")
@@ -101,6 +103,11 @@ if __name__=="__main__":
                 job_type = "reco/topoClusters/electronicsNoise/calibrated" 
             else:
                 job_type = "reco/topoClusters/electronicsNoise" 
+        if '--addPileupNoise' in sys.argv:
+            if '--calibrate' in sys.argv:
+                job_type = "reco/topoClusters/pileupNoise/calibrated" 
+            else:
+                job_type = "reco/topoClusters/pileupNoise" 
         elif  '--calibrate' in sys.argv:
             job_type = "reco/topoClusters/noNoise/calibrated"
         else:
@@ -223,7 +230,7 @@ if __name__=="__main__":
         phiMax = args.phiMax
         flat = args.flat
         pdg = args.particle
-        particle_human_names = {11: 'electron', -11: 'positron', -13: 'mup', 13: 'mum', 22: 'photon', 111: 'pi0', 211: 'pip', -211: 'pim', 130: "K0L"}
+        particle_human_names = {11: 'electron', -11: 'positron', -13: 'mup', 13: 'mum', 22: 'photon', 111: 'pi0', 211: 'pip', -211: 'pim', 130: "K0L", 0:"geantino"}
         print "=================================="
         print "==       SINGLE PARTICLES      ==="
         print "=================================="
@@ -370,6 +377,8 @@ if __name__=="__main__":
             common_fccsw_command += ' --seed %i'%(seed)
         if args.noise:
             common_fccsw_command += ' --addElectronicsNoise'
+        if args.addPileupNoise:
+            common_fccsw_command += ' --addPileupNoise'        
         if args.calibrate:
             common_fccsw_command += ' --calibrate'
         if args.physics:
@@ -437,16 +446,16 @@ if __name__=="__main__":
                 frun.write('%s --inNames %s\n'%(common_fccsw_command, listOfInputFiles))
            
         if '--recPositions' in sys.argv:
-            frun.write('python %s/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
+            frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
         elif '--ntuple' in sys.argv:
-            frun.write('python %s/Convert_Jan.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
+            frun.write('python %s/python/Convert_Jan.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
         elif '--recTopoClusters' in sys.argv:
             if '--calibrate' in sys.argv:
                 frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+os.path.basename(outfile) ))
                 frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
-            frun.write('python %s/Convert.py $JOBDIR/%s $JOBDIR/%s \n'%(current_dir,outfile,outfile+'_ntuple.root'))
+            frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/%s \n'%(current_dir,outfile,outfile+'_ntuple.root'))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile+'_ntuple.root',outdir))
         elif '--pileup' in sys.argv:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))

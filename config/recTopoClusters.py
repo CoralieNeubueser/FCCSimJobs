@@ -26,6 +26,7 @@ print "number of events = ", num_events
 print "input name: ", input_name
 print "output name: ", output_name
 print "electronic noise in Barrel: ", elNoise
+print "pileup noise in Barrel: ", puNoise
 print "calibrate clusters: ", calib
 
 from Gaudi.Configuration import *
@@ -61,7 +62,7 @@ hcalFwdCellsName = "HCalFwdCells"
 ecalBarrelReadoutName = "ECalBarrelPhiEta"
 ecalEndcapReadoutName = "EMECPhiEta"
 ecalFwdReadoutName = "EMFwdPhiEta"
-hcalBarrelReadoutName = "BarHCal_Readout_phieta"
+hcalBarrelReadoutName = "BarHCal_Readout"
 hcalBarrelReadoutVolume = "HCalBarrelReadout"
 hcalExtBarrelReadoutName = "ExtBarHCal_Readout"
 hcalExtBarrelReadoutVolume = "HCalExtBarrelReadout"
@@ -76,6 +77,8 @@ ecalBarrelNoiseHistName = "h_elecNoise_fcc_"
 pileupNoisePath = "/afs/cern.ch/work/c/cneubuse/public/FCChh/pileupNoiseBarrel_mu100.root"
 ecalBarrelPileupNoiseHistName = "h_pileup_ecal_layer"
 hcalBarrelPileupNoiseHistName = "h_pileup_hcal_layer"
+ecalBarrelPileupOffsetHistName = "h_mean_pileup_ecal_layer"
+hcalBarrelPileupOffsetHistName = "h_mean_pileup_hcal_layer"
 # active material identifier name
 hcalIdentifierName = ["module", "row", "layer"]
 # active material volume name
@@ -272,7 +275,7 @@ if elNoise:
                                                     readoutHCal = hcalBarrelReadoutVolume,
                                                     positionsECalTool = ECalBcells,
                                                     positionsHCalTool = HCalBcellVols,
-                                                    calibrate = False,
+                                                    calibrate = False, # will not re-calibrate the ECal, but HCal cells are scaled to EM
                                                     ehECal = 1.,
                                                     ehHCal = 1.1,
                                                     fractionECal = 0.8,
@@ -319,6 +322,7 @@ if puNoise:
     # ECal Barrel noise
     noiseBarrel = NoiseCaloCellsFromFileTool("NoiseBarrel",
                                              readoutName = ecalBarrelReadoutName,
+                                             cellPositionsTool = ECalBcells,
                                              noiseFileName = pileupNoisePath,
                                              elecNoiseHistoName = ecalBarrelPileupNoiseHistName,
                                              activeFieldName = "layer",
@@ -345,6 +349,7 @@ if puNoise:
     # HCal Barrel noise
     noiseHcal = NoiseCaloCellsFromFileTool("NoiseBarrel",
                                              readoutName = hcalBarrelReadoutVolume,
+                                            cellPositionsTool = HCalBcellVols,
                                              noiseFileName = pileupNoisePath,
                                              elecNoiseHistoName = hcalBarrelPileupNoiseHistName,
                                              activeFieldName = "layer",
@@ -388,7 +393,7 @@ if puNoise:
     createTopoInputNoise.hcalFwdCells.Path = "emptyCaloCells"
     
     readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
-                                           fileName = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_segHcal.root",
+                                           fileName = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_pileupNoiseLevel.root",
                                            OutputLevel = DEBUG)
     
     # Topo-Cluster Algorithm 
@@ -440,7 +445,7 @@ if puNoise:
                                                                    positionsHECTool = HECcells,
                                                                    positionsEMFwdTool = ECalFwdcells,
                                                                    positionsHFwdTool = HCalFwdcells,
-                                                                   hits = "calibCaloClusterBarrelNoiseCells",
+                                                                   hits = "calibCaloClusterBarrelCellsNoise",
                                                                    positionedHits = "calibCaloClusterBarrelNoiseCellPositions",
                                                                    OutputLevel = INFO)
  
@@ -585,12 +590,16 @@ if elNoise:
     list_of_algorithms += [createEcalBarrelCells, createHcalBarrelCells, createTopoClustersNoise]
     if calib:
         list_of_algorithms += [calibrateClustersNoise, positionsCalibClusterBarrelNoise]
+
+if puNoise:
+    list_of_algorithms += [createEcalBarrelCells, createHcalBarrelCells, createTopoClustersNoise]
+    if calib:
+        list_of_algorithms += [calibrateClustersNoise, positionsCalibClusterBarrelNoise]
     
 else:
     list_of_algorithms += [createTopoClusters]
-    
-if calib:
-    list_of_algorithms += [calibrateClusters, positionsCalibratedClusterBarrel]
+    if calib:
+        list_of_algorithms += [calibrateClusters, positionsCalibratedClusterBarrel]
 
 list_of_algorithms += [out]
 

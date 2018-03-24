@@ -341,6 +341,7 @@ if __name__=="__main__":
             import re
             infile_split = re.split(r'[_.]',infile)
             uniqueID = infile_split[2] + '_' + infile_split[3]
+            seed = uniqueID
             print uniqueID
         if args.physics:
             frunname = 'job_%s_%s_%s.sh'%(short_job_type,process,str(seed))

@@ -43,10 +43,8 @@ ecalBarrelReadoutNamePhiEta = "ECalBarrelPhiEta"
 ecalEndcapReadoutName = "EMECPhiEtaReco"
 ecalFwdReadoutName = "EMFwdPhiEtaReco"
 # HCAL readouts
-hcalBarrelReadoutName = "BarHCal_Readout"
-hcalBarrelReadoutVolume = "HCalBarrel"
-hcalExtBarrelReadoutName = "ExtBarHCal_Readout"
-hcalExtBarrelReadoutVolume = "HCalExtBarrel"
+hcalBarrelReadoutName = "HCalBarrelReadout"
+hcalExtBarrelReadoutName = "HCalExtBarrelReadout"
 hcalEndcapReadoutName = "HECPhiEtaReco"
 hcalFwdReadoutName = "HFwdPhiEtaReco"
 # Tail Catcher readout
@@ -81,7 +79,7 @@ recreateEcalBarrelCells.cells.Path="ECalBarrelCellsRedo"
 ##############################################################################################################
 
 #Configure tools for calo cell positions
-from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool, CellPositionsTailCatcherTool 
+from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool, CellPositionsTailCatcherTool 
 ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel", 
                                     readoutName = ecalBarrelReadoutNamePhiEta, 
                                     OutputLevel = INFO)
@@ -91,12 +89,12 @@ EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC",
 ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd", 
                                         readoutName = ecalFwdReadoutName, 
                                         OutputLevel = INFO)
-HCalBcells = CellPositionsHCalBarrelTool("CellPositionsHCalBarrel", 
-                                    readoutName = hcalBarrelReadoutName, 
-                                    OutputLevel = INFO)
-HCalExtBcells = CellPositionsHCalBarrelTool("CellPositionsHCalExtBarrel", 
-                                       readoutName = hcalExtBarrelReadoutName, 
-                                       OutputLevel = INFO)
+HCalBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrel", 
+                                              readoutName = hcalBarrelReadoutName, 
+                                              OutputLevel = INFO)
+HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel", 
+                                                 readoutName = hcalExtBarrelReadoutName, 
+                                                 OutputLevel = INFO)
 HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC", 
                                    readoutName = hcalEndcapReadoutName, 
                                    OutputLevel = INFO)

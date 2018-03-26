@@ -275,7 +275,7 @@ if elNoise:
                                                     readoutHCal = hcalBarrelReadoutVolume,
                                                     positionsECalTool = ECalBcells,
                                                     positionsHCalTool = HCalBcellVols,
-                                                    calibrate = False, # will not re-calibrate the ECal, but HCal cells are scaled to EM
+                                                    calibrate = True, # will not re-calibrate the ECal, but HCal cells are scaled to EM
                                                     ehECal = 1.,
                                                     ehHCal = 1.1,
                                                     fractionECal = 0.8,
@@ -424,7 +424,7 @@ if puNoise:
                                                     readoutHCal = hcalBarrelReadoutVolume,
                                                     positionsECalTool = ECalBcells,
                                                     positionsHCalTool = HCalBcellVols,
-                                                    calibrate = False,
+                                                    calibrate = True,
                                                     ehECal = 1.,
                                                     ehHCal = 1.1,
                                                     fractionECal = 0.8,
@@ -521,7 +521,7 @@ if (calib) :
                                            readoutHCal = hcalBarrelReadoutVolume,
                                            positionsECalTool = ECalBcells,
                                            positionsHCalTool = HCalBcellVols,
-                                           calibrate = False,
+                                           calibrate = True,
                                            ehECal = 1.,
                                            ehHCal = 1.1,
                                            fractionECal = 0.8,
@@ -564,7 +564,7 @@ positionsClusterBarrel = CreateCaloCellPositions("positionsClusterBarrel",
 
 # PODIO algorithm
 out = PodioOutput("out", OutputLevel=DEBUG)
-out.outputCommands = ["drop *", "keep GenParticles", "keep GenVertices", "keep caloClustersBarrel", "keep calibCaloClustersBarrel", "keep calibCaloClusterBarrelCells", "keep calibCaloClusterBarrelCellPositions"]
+out.outputCommands = ["drop *", "keep GenParticles", "keep GenVertices", "keep caloClustersBarrel", "keep calibCaloClustersBarrel", "keep caloClusterBarrelCells", "keep calibCaloClusterBarrelCells", "keep calibCaloClusterBarrelCellPositions"]
 out.filename = output_name
 
 if elNoise or puNoise:
@@ -597,7 +597,7 @@ if puNoise:
         list_of_algorithms += [calibrateClustersNoise, positionsCalibClusterBarrelNoise]
     
 else:
-    list_of_algorithms += [createTopoClusters]
+    list_of_algorithms += [createTopoClusters, positionsClusterBarrel]
     if calib:
         list_of_algorithms += [calibrateClusters, positionsCalibratedClusterBarrel]
 

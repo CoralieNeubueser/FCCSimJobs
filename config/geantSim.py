@@ -49,7 +49,7 @@ if simargs.singlePart:
     phiMin = simargs.phiMin
     phiMax = simargs.phiMax
     pdg = simargs.particle
-    particle_geant_names = {11: 'e-', -11: 'e+', -13: 'mu+', 13: 'mu-', 22: 'gamma', 111: 'pi0', 211: 'pi+', -211: 'pi-', 130: 'kaon0L'}
+    particle_geant_names = {11: 'e-', -11: 'e+', -13: 'mu+', 13: 'mu-', 22: 'gamma', 111: 'pi0', 211: 'pi+', -211: 'pi-', 130: 'kaon0L', 0:'geantino'}
     print "=================================="
     print "==       SINGLE PARTICLES      ==="
     print "=================================="
@@ -404,4 +404,5 @@ ApplicationMgr(
     EvtSel = 'NONE',
     EvtMax   = num_events,
     ExtSvc = [podioevent, geoservice, geantservice],
+    OutputLevel = VERBOSE
 )

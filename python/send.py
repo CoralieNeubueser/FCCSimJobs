@@ -84,6 +84,8 @@ if __name__=="__main__":
 
     parser.add_argument("--tripletTracker", action="store_true", help="Use triplet tracker layout instead of baseline")
 
+    windowSize = "7x17"
+
     sim = False
     if '--recPositions' in sys.argv:
         default_options = 'config/recPositions.py'
@@ -122,7 +124,7 @@ if __name__=="__main__":
         job_type = "ntup"
         short_job_type = "ntup"
     elif '--pileup' in sys.argv:
-        default_options = 'config/recPileupNoisePerCell.py'
+        default_options = 'config/recPileupNoisePerCellAndCluster.py'
         job_type = "ana/pileup"
         short_job_type = "pileup"
     elif '--mergeMinBias' in sys.argv:
@@ -454,14 +456,15 @@ if __name__=="__main__":
             frun.write('rm edm.root \n')
         elif '--recTopoClusters' in sys.argv:
             if '--calibrate' in sys.argv:
-                frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+os.path.basename(outfile) ))
+                frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+'/'+os.path.basename(outfile) ))
                 frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
             frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/%s \n'%(current_dir,outfile,outfile+'_ntuple.root'))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile+'_ntuple.root',outdir))
         elif '--pileup' in sys.argv:
-            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
+            frun.write('mkdir %s \n'%(outdir+'/'+windowSize+'/'))
+            frun.write('hadd -f %s $JOBDIR/%s %s \n'%(outdir+'/'+windowSize+'/'+outfile, outfile, outdir+'/'+outfile))
        
-        if not '--mergeMinBias' in sys.argv:
+        elif not '--mergeMinBias' in sys.argv:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
             frun.write('rm $JOBDIR/%s \n'%(outfile))
         else:

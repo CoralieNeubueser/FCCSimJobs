@@ -3,44 +3,113 @@ path_to_LHE = '/afs/cern.ch/work/h/helsens/public/FCCsoft/FlatGunLHEventProducer
 path_to_FCCSW = '/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj'
 yamldir='/afs/cern.ch/work/h/helsens/public/FCCDicts/yaml/FCC/simu/'
 version = 'v03'
+
 import glob, os, sys
 import commands
 import time
 import random
+import json
+import argparse
+import imp
+import decimal
+import re
+import yaml
+
+from math import pi
 from datetime import datetime
+
 import utils as ut
 import makeyaml as my
+import users as us
 
 #__________________________________________________________
-def getInputFiles(path,version):
+def getInputFiles(path):
     files = []
-    import json
-    dicname = '/afs/cern.ch/work/h/helsens/public/FCCDicts/SimulationDict_'+version+'.json'
-    mydict=None
-    with open(dicname) as f:
-        mydict = json.load(f)
-    if not path in mydict.keys():
-        print "ERROR, dictionary ", dicname, " does not contain ", path
-        quit()
-    for j in mydict[path]:
-        if j['status']=='DONE':
-            if os.path.exists(j['out']):
-                files.append(j['out'])
-    if len(files) == 0:
-        print "ERROR, no input files"
-        quit()
+    All_files = glob.glob("%s/merge.yaml"%path)
+    if len(All_files)==0:
+        print 'there is no files checked for process %s exit'%path
+        sys.exit(3)
+
+    if len(All_files)>1:
+        print 'not sure how you can get two merged files %s exit'%path
+        sys.exit(3)
+
+    with open(All_files[0], 'r') as stream:
+        try:
+            tmpf = yaml.load(stream)
+            outfiles=tmpf['merge']['outfiles']
+            for f in outfiles:
+                fname='%s%s'%(tmpf['merge']['outdir'],f[0])
+                files.append(fname)
+        except yaml.YAMLError as exc:
+            print(exc)
+
     return files
 
-def takeOnlyNonexistingFiles(files):
-    # ToDo remove from list files that exist in a reco dictionary
-    return files, len(files)
+#__________________________________________________________
+def takeOnlyNonexistingFiles(files, output):
+    All_files = glob.glob("%s/output*.yaml"%output)
+    if len(All_files)==0: return files, len(files)
+    newlist=[]
+    for f in files:
+        found=False
+        tocheck=f.split('/')[-1]
+        tocheck=tocheck.replace('.root','')
+        for ff in All_files:
+            if tocheck in ff: found=True
+        if not found:newlist.append(f)
+    return newlist, len(newlist)
 
+
+#__________________________________________________________
+def getJobInfo(argv):
+    if '--recPositions' in argv:
+        default_options = 'config/recPositions.py'
+        job_type = "reco/positions"
+        short_job_type = "recPos"
+        return default_options,job_type,short_job_type,False
+
+    elif '--recSlidingWindow' in argv:
+        default_options = 'config/recSlidingWindow.py'
+        if '--noise' in argv:
+            job_type = "reco/slidingWindow/electronicsNoise"
+        else:
+            job_type = "reco/slidingWindow/noNoise"
+        short_job_type = "recWin"
+        return default_options,job_type,short_job_type,False
+
+    elif '--recTopoClusters' in argv:
+        default_options = 'config/recTopoClusters.py'
+        job_type = "reco/topoClusters"
+        short_job_type = "recTopo"
+        return default_options,job_type,short_job_type,False
+
+    elif '--ntuple' in argv:
+        default_options = '....' # TODO how ?
+        job_type = "ntup"
+        short_job_type = "ntup"
+        return default_options,job_type,short_job_type,False
+
+    elif '--trackerPerformance' in argv:
+        default_options = 'config/geantSim_trackerPerformance.py'
+        if "--tripletTracker" in argv:
+          job_type="simu/trkPerf_triplet"
+          short_job_type = "sim"
+        else:
+          job_type="simu/trkPerf_v3_03"
+          short_job_type = "sim"
+        return default_options,job_type,short_job_type,True
+
+    else:
+        default_options = 'config/geantSim.py'
+        job_type = "simu"
+        short_job_type = "sim"
+        return default_options,job_type,short_job_type,True
 
 
 #__________________________________________________________
 if __name__=="__main__":
     Dir = os.getcwd()
-    import users as us
 
     user=os.environ['USER']
     userext=-999999
@@ -51,7 +120,6 @@ if __name__=="__main__":
         print 'user not known ',user,'   exit (needs to be added to users.py)'
         sys.exit(3)
 
-    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--local', type=str, help='Use local FCCSW installation, need to provide a file with path_to_INIT and or path_to_FCCSW')
     parser.add_argument('--version', type=str, default = "v03", help='Specify the version of FCCSimJobs')
@@ -149,6 +217,8 @@ if __name__=="__main__":
         job_type = "simu"
         short_job_type = "sim"
         sim = True
+    default_options,job_type,short_job_type,sim = getJobInfo(sys.argv)
+
     parser.add_argument('--jobOptions', type=str, default = default_options, help='Name of the job options run by FCCSW (default config/geantSim.py')
 
     genTypeGroup = parser.add_mutually_exclusive_group(required = True) # Type of events to generate
@@ -156,9 +226,7 @@ if __name__=="__main__":
     genTypeGroup.add_argument("--physics", action='store_true', help="Physics even run with Pythia")
     genTypeGroup.add_argument("--LHE", action='store_true', help="LHE events + Pythia")
 
-    from math import pi
     singlePartGroup = parser.add_argument_group('Single particles')
-    import sys
     singlePartGroup.add_argument('-e','--energy', type=int, required = '--singlePart' in sys.argv, help='Energy of particle in GeV')
     singlePartGroup.add_argument('--etaMin', type=float, default=0., help='Minimal pseudorapidity')
     singlePartGroup.add_argument('--etaMax', type=float, default=0., help='Maximal pseudorapidity')
@@ -168,7 +236,7 @@ if __name__=="__main__":
     singlePartGroup.add_argument('--flat', action='store_true', help='flat energy distribution for single particle generation')
 
     physicsGroup = parser.add_argument_group('Physics','Physics process')
-    lhe_physics = ["ljets","top","Wqq","Zqq","Hbb"]
+    lhe_physics = ["ljets","cjets","bjets","top","Wqq","Zqq","Hbb"]
     SM_physics = ["MinBias","Haa","Zee", "H4e"]
     physicsGroup.add_argument('--process', type=str, required = '--physics' in sys.argv, help='Process type', choices = lhe_physics + SM_physics)
     physicsGroup.add_argument('--pt', type=int,
@@ -193,7 +261,6 @@ if __name__=="__main__":
 
     if '--local' in sys.argv:
         print "FCCSW is taken from : ", args.local ,"\n"
-        import imp
         path=imp.load_source('path', args.local)
         try :
             path_to_INIT = path.path_to_INIT
@@ -208,6 +275,8 @@ if __name__=="__main__":
         print 'path_to_FCCSW: ',path_to_FCCSW
 
     version = args.version
+    yamlcheck = yamldir+version+'/check.yaml'
+
     print 'FCCSim version: ',version
     magnetic_field = not args.bFieldOff
     b_field_str = "bFieldOn" if not args.bFieldOff else "bFieldOff"
@@ -238,7 +307,6 @@ if __name__=="__main__":
         print "=================================="
         print "particle PDG, name: ", pdg, " ", particle_human_names[pdg]
         print "energy: ", energy, "GeV"
-        import decimal
         if etaMin == etaMax:
             print "eta: ", etaMin
             eta_str = "eta" + str(decimal.Decimal(str(etaMin)).normalize())
@@ -293,11 +361,13 @@ if __name__=="__main__":
     # first make sure the output path for root files exists
     outdir = os.path.join( output_path, version, job_dir, job_type)
     print "Output will be stored in ... ", outdir
-    if not sim:
-        inputID = version+"/" + job_dir + "/simu"
-        inputID = inputID.replace('//','/')
-        input_files = getInputFiles(inputID,version)
-        input_files, instatus = takeOnlyNonexistingFiles(input_files)
+    if not sim:       
+        inputID = os.path.join(yamldir, version, job_dir, 'simu')
+        outputID = os.path.join(yamldir, version, job_dir, job_type)
+
+        input_files = getInputFiles(inputID)
+        input_files, instatus = takeOnlyNonexistingFiles(input_files, outputID)
+
         if instatus < num_jobs:
             num_jobs = instatus
             print "WARNING Directory contains only ", instatus, " files, using all for the reconstruction"
@@ -321,10 +391,11 @@ if __name__=="__main__":
         print os.path.isfile(card)
 
     seed=''
+    uid=os.path.join(version, job_dir, job_type)
     for i in xrange(num_jobs):
         if sim:
             seed=ut.getuid()
-            yamldir_process = '%s/%s'%(yamldir,os.path.join(version, job_dir, job_type))
+            yamldir_process = '%s/%s'%(yamldir,uid)
             if not ut.dir_exist(yamldir_process):
                 os.system("mkdir -p %s"%yamldir_process)
             myyaml = my.makeyaml(yamldir_process, seed)
@@ -340,11 +411,19 @@ if __name__=="__main__":
             infile = os.path.basename(input_files[i])
             outfile = infile
             print "Name of the input file: ", infile
-            import re
+
+            yamldir_process = '%s/%s'%(yamldir,uid)
+            if not ut.dir_exist(yamldir_process):
+                os.system("mkdir -p %s"%yamldir_process)
+
             infile_split = re.split(r'[_.]',infile)
-            uniqueID = infile_split[2] + '_' + infile_split[3]
-            seed = uniqueID
-            print uniqueID
+            seed = infile_split[1]
+            myyaml = my.makeyaml(yamldir_process, seed)
+        
+            if not myyaml: 
+                print 'job %s already exists'%str(seed)
+                continue
+
         if args.physics:
             frunname = 'job_%s_%s_%s.sh'%(short_job_type,process,str(seed))
         else:
@@ -399,8 +478,10 @@ if __name__=="__main__":
                     frun.write('cd %s\n' %(path_to_LHE))
                     if process=='ljets':
                         frun.write('python flatGunLHEventProducer.py   --pdg 1 2 3   --guntype pt   --nevts %i   --ecm 100000.   --pmin %f   --pmax %f   --etamin %f   --etamax %f  --seed %i   --output $JOBDIR/events.lhe\n'%(num_events,pt,pt,-1.6,1.6,seed))
-                    # elif process=='bjets':
-                    #     frun.write('python flatGunLHEventProducer.py   --pdg 5   --guntype pt   --nevts %i   --ecm 100000.   --pmin %f   --pmax %f   --etamin %f   --etamax %f  --seed %i   --output $JOBDIR/events.lhe\n'%(num_events,pt,pt,-1.6,1.6,seed))
+                    elif process=='cjets':
+                        frun.write('python flatGunLHEventProducer.py   --pdg 4   --guntype pt   --nevts %i   --ecm 100000.   --pmin %f   --pmax %f   --etamin %f   --etamax %f  --seed %i   --output $JOBDIR/events.lhe\n'%(num_events,pt,pt,-1.6,1.6,seed))
+                    elif process=='bjets':
+                        frun.write('python flatGunLHEventProducer.py   --pdg 5   --guntype pt   --nevts %i   --ecm 100000.   --pmin %f   --pmax %f   --etamin %f   --etamax %f  --seed %i   --output $JOBDIR/events.lhe\n'%(num_events,pt,pt,-1.6,1.6,seed))
                     elif process=='top':
                         frun.write('python flatGunLHEventProducer.py   --pdg 6   --guntype pt   --nevts %i   --ecm 100000.   --pmin %f   --pmax %f   --etamin %f   --etamax %f  --seed %i   --output $JOBDIR/events.lhe\n'%(num_events,pt,pt,-1.6,1.6,seed))
                     elif process=='Zqq':
@@ -477,6 +558,7 @@ if __name__=="__main__":
             cmdBatch="bsub -M 4000000 -R \"pool=40000\" -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
             batchid=-1
             job,batchid=ut.SubmitToLsf(cmdBatch,10)
+            ut.yamlstatus(yamlcheck, uid, False)
         elif args.no_submit:
             job = 0
             print "scripts generated in ", os.path.join(logdir, frunname),
@@ -512,6 +594,8 @@ if __name__=="__main__":
             print cmdBatch
             batchid=-1
             job,batchid=ut.SubmitToCondor(cmdBatch,10)
+            ut.yamlstatus(yamlcheck, uid, False)
+
         nbjobsSub+=job
 
     print 'succesfully sent %i  jobs'%nbjobsSub

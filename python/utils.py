@@ -92,7 +92,7 @@ def getsize(f):
 
 #__________________________________________________________
 def getuid():
-    seed =random.randint(0,900000000)
+    seed = random.randint(0,900000000)
     return seed
 
 #__________________________________________________________
@@ -157,3 +157,26 @@ def SubmitToCondor(cmd,nbtrials):
         if i==nbtrials-1:
             print "failed sumbmitting after: "+str(nbtrials)+" trials, will exit"
             return 0,0
+
+
+#__________________________________________________________
+def yamlcheck(yamlfile, process):
+#if no input file
+    print 'yamlfile check   ',yamlfile
+    print 'process  in check',process
+    if not file_exist(yamlfile):
+        return False
+    
+    doc = None
+    with open(yamlfile) as f:
+        try:
+            doc = yaml.load(f)
+        except yaml.YAMLError as exc:
+            print(exc)
+    try: 
+        value = doc[process]
+        if value: return True
+        return False
+    except KeyError, e:
+        print 'Process %s does not exist' % str(e)
+        return False

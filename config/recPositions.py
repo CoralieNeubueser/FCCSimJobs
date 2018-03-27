@@ -21,8 +21,7 @@ from Gaudi.Configuration import *
 ##############################################################################################################
 #######                                         GEOMETRY                                         #############
 ##############################################################################################################
-path_to_detector = '/afs/cern.ch/work/c/cneubuse/public/CaloCellPositions/FCCSW/'
-#'/afs/cern.ch/work/h/helsens/public/FCCsoft/FCCSW-0.8.3/'
+path_to_detector = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj"
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
@@ -38,15 +37,14 @@ from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc", detectors = detectors_to_use, OutputLevel = WARNING)
 
 # ECAL readouts
-ecalBarrelReadoutName = "ECalBarrelEta"
-ecalBarrelReadoutNamePhiEta = "ECalBarrelPhiEta"
+ecalBarrelReadoutName = "ECalBarrelPhiEta"
 ecalEndcapReadoutName = "EMECPhiEtaReco"
-ecalFwdReadoutName = "EMFwdPhiEtaReco"
+ecalFwdReadoutName = "EMFwdPhiEta"
 # HCAL readouts
 hcalBarrelReadoutName = "HCalBarrelReadout"
 hcalExtBarrelReadoutName = "HCalExtBarrelReadout"
 hcalEndcapReadoutName = "HECPhiEtaReco"
-hcalFwdReadoutName = "HFwdPhiEtaReco"
+hcalFwdReadoutName = "HFwdPhiEta"
 # Tail Catcher readout
 tailCatcherReadoutName = "Muons_Readout"
 ##############################################################################################################
@@ -74,6 +72,33 @@ recreateEcalBarrelCells = CreateCaloCells("redoEcalBarrelCells",
 recreateEcalBarrelCells.hits.Path="ECalBarrelCells"
 recreateEcalBarrelCells.cells.Path="ECalBarrelCellsRedo"
 
+from Configurables import RewriteBitfield
+rewriteECalEC = RewriteBitfield("RewriteECalEC",
+                                # old bitfield (readout)
+                                oldReadoutName = "EMECPhiEta",
+                                # specify which fields are going to be deleted
+                                removeIds = ["sublayer"],
+                                # new bitfield (readout), with new segmentation
+                                newReadoutName = ecalEndcapReadoutName,
+                                debugPrint = 10,
+                                OutputLevel = DEBUG)
+# clusters are needed, with deposit position and cellID in bits
+rewriteECalEC.inhits.Path = "ECalEndcapCells"
+rewriteECalEC.outhits.Path = "newECalEndcapCells"
+
+rewriteHCalEC = RewriteBitfield("RewriteHCalEC",
+                                # old bitfield (readout)
+                                oldReadoutName = "HECPhiEta",
+                                # specify which fields are going to be deleted
+                                removeIds = ["sublayer"],
+                                # new bitfield (readout), with new segmentation
+                                newReadoutName = hcalEndcapReadoutName,
+                                debugPrint = 10,
+                                OutputLevel = DEBUG)
+# clusters are needed, with deposit position and cellID in bits
+rewriteHCalEC.inhits.Path = "HCalEndcapCells"
+rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
+
 ##############################################################################################################
 #######                                       CELL POSITIONS                                     #############
 ##############################################################################################################
@@ -81,11 +106,11 @@ recreateEcalBarrelCells.cells.Path="ECalBarrelCellsRedo"
 #Configure tools for calo cell positions
 from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool, CellPositionsTailCatcherTool 
 ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel", 
-                                    readoutName = ecalBarrelReadoutNamePhiEta, 
+                                    readoutName = ecalBarrelReadoutName, 
                                     OutputLevel = INFO)
 EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC", 
                                     readoutName = ecalEndcapReadoutName, 
-                                    OutputLevel = INFO)
+                                    OutputLevel = DEBUG)
 ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd", 
                                         readoutName = ecalFwdReadoutName, 
                                         OutputLevel = INFO)
@@ -125,12 +150,12 @@ positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel",
                                           OutputLevel = INFO)
 positionsEcalEndcap = CreateCellPositions("positionsEcalEndcap", 
                                           positionsTool=EMECcells, 
-                                          hits = "ECalEndcapCells", 
+                                          hits = "newECalEndcapCells", 
                                           positionedHits = "ECalEndcapCellPositions", 
                                           OutputLevel = INFO)
 positionsHcalEndcap = CreateCellPositions("positionsHcalEndcap", 
                                           positionsTool=HECcells, 
-                                          hits = "HCalEndcapCells", 
+                                          hits = "newHCalEndcapCells", 
                                           positionedHits = "HCalEndcapCellPositions", 
                                           OutputLevel = INFO)
 positionsEcalFwd = CreateCellPositions("positionsEcalFwd", 
@@ -173,6 +198,8 @@ out.AuditExecute = True
 
 list_of_algorithms = [podioinput,
                       recreateEcalBarrelCells,
+                      rewriteECalEC,
+                      rewriteHCalEC,
                       positionsEcalBarrel,
                       positionsEcalEndcap,
                       positionsEcalFwd, 

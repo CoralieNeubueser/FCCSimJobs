@@ -100,6 +100,16 @@ def getJobInfo(argv):
           short_job_type = "sim"
         return default_options,job_type,short_job_type,True
 
+    elif '--pileup' in sys.argv:
+        default_options = 'config/recPileupNoisePerCellAndCluster.py'
+        job_type = "ana/pileup"
+        short_job_type = "pileup"
+
+    elif '--mergeMinBias' in sys.argv:
+        default_options = 'config/mergeMinBias.py'
+        job_type = "ana/merged" 
+        short_job_type = "mergeMinBias"
+
     else:
         default_options = 'config/geantSim.py'
         job_type = "simu"
@@ -154,69 +164,70 @@ if __name__=="__main__":
 
     windowSize = "7x17"
 
-    sim = False
-    if '--recPositions' in sys.argv:
-        default_options = 'config/recPositions.py'
-        job_type = "reco/positions"
-        short_job_type = "recPos"
-    elif '--recSlidingWindow' in sys.argv:
-        default_options = 'config/recSlidingWindow.py'
-        if '--noise' in sys.argv:
-            job_type = "reco/slidingWindow/electronicsNoise"
-        else:
-            job_type = "reco/slidingWindow/noNoise"
-        short_job_type = "recWin"
-    elif '--recTopoClusters' in sys.argv:
-        default_options = 'config/recTopoClusters.py'
-        if '--noise' in sys.argv:
-            if '--calibrate' in sys.argv:
-                job_type = "reco/topoClusters/electronicsNoise/calibrated" 
-            else:
-                job_type = "reco/topoClusters/electronicsNoise" 
-        if '--addPileupNoise' in sys.argv:
-            if '--calibrate' in sys.argv:
-                job_type = "reco/topoClusters/pileupNoise/calibrated" 
-            else:
-                job_type = "reco/topoClusters/pileupNoise" 
-        elif  '--calibrate' in sys.argv:
-            job_type = "reco/topoClusters/noNoise/calibrated"
-        else:
-            job_type = "reco/topoClusters/noNoise"
-        short_job_type = "recTopo"
-    elif '--recLayerWiseSlidingWindow' in sys.argv:
-        default_options = 'config/recLayerWiseSlidingWindow.py'
-        job_type = "reco/slidingWindowPerLayer/"
-        short_job_type = "recLayerWin"
-    elif '--ntuple' in sys.argv:
-        default_options = 'config/recPositions.py'
-        job_type = "ntup"
-        short_job_type = "ntup"
-    elif '--pileup' in sys.argv:
-        default_options = 'config/recPileupNoisePerCellAndCluster.py'
-        job_type = "ana/pileup"
-        short_job_type = "pileup"
-    elif '--mergeMinBias' in sys.argv:
-        default_options = 'config/mergeMinBias.py'
-        job_type = "ana/merged" 
-        short_job_type = "mergeMinBias"
-    elif '--recPileupTopoClusters' in sys.argv:
-        default_options = 'config/recPileupTopoClusters.py'
-        job_type = "reco/topoClustersPileup" 
-        short_job_type = "recTopoPileup"
-    elif '--trackerPerformance' in sys.argv:
-        default_options = 'config/geantSim_trackerPerformance.py'
-        sim = True
-        if "--tripletTracker" in sys.argv:
-          job_type="simu/trkPerf_triplet"
-          short_job_type = "sim"
-        else:
-          job_type="simu/trkPerf_v3_03"
-          short_job_type = "sim"
-    else:
-        default_options = 'config/geantSim.py'
-        job_type = "simu"
-        short_job_type = "sim"
-        sim = True
+#    sim = False
+#    if '--recPositions' in sys.argv:
+#        default_options = 'config/recPositions.py'
+#        job_type = "reco/positions"
+#        short_job_type = "recPos"
+#    elif '--recSlidingWindow' in sys.argv:
+#        default_options = 'config/recSlidingWindow.py'
+#        if '--noise' in sys.argv:
+#            job_type = "reco/slidingWindow/electronicsNoise"
+#        else:
+#            job_type = "reco/slidingWindow/noNoise"
+#        short_job_type = "recWin"
+#    elif '--recTopoClusters' in sys.argv:
+#        default_options = 'config/recTopoClusters.py'
+#        if '--noise' in sys.argv:
+#            if '--calibrate' in sys.argv:
+#                job_type = "reco/topoClusters/electronicsNoise/calibrated" 
+#            else:
+#                job_type = "reco/topoClusters/electronicsNoise" 
+#        if '--addPileupNoise' in sys.argv:
+#            if '--calibrate' in sys.argv:
+#                job_type = "reco/topoClusters/pileupNoise/calibrated" 
+#            else:
+#                job_type = "reco/topoClusters/pileupNoise" 
+#        elif  '--calibrate' in sys.argv:
+#            job_type = "reco/topoClusters/noNoise/calibrated"
+#        else:
+#            job_type = "reco/topoClusters/noNoise"
+#        short_job_type = "recTopo"
+#    elif '--recLayerWiseSlidingWindow' in sys.argv:
+#        default_options = 'config/recLayerWiseSlidingWindow.py'
+#        job_type = "reco/slidingWindowPerLayer/"
+#        short_job_type = "recLayerWin"
+#    elif '--ntuple' in sys.argv:
+#        default_options = 'config/recPositions.py'
+#        job_type = "ntup"
+#        short_job_type = "ntup"
+#    elif '--pileup' in sys.argv:
+#        default_options = 'config/recPileupNoisePerCellAndCluster.py'
+#        job_type = "ana/pileup"
+#        short_job_type = "pileup"
+#    elif '--mergeMinBias' in sys.argv:
+#        default_options = 'config/mergeMinBias.py'
+#        job_type = "ana/merged" 
+#        short_job_type = "mergeMinBias"
+#    elif '--recPileupTopoClusters' in sys.argv:
+#        default_options = 'config/recPileupTopoClusters.py'
+#        job_type = "reco/topoClustersPileup" 
+#        short_job_type = "recTopoPileup"
+#    elif '--trackerPerformance' in sys.argv:
+#        default_options = 'config/geantSim_trackerPerformance.py'
+#        sim = True
+#        if "--tripletTracker" in sys.argv:
+#          job_type="simu/trkPerf_triplet"
+#          short_job_type = "sim"
+#        else:
+#          job_type="simu/trkPerf_v3_03"
+#          short_job_type = "sim"
+#    else:
+#        default_options = 'config/geantSim.py'
+#        job_type = "simu"
+#        short_job_type = "sim"
+#        sim = True
+        
     default_options,job_type,short_job_type,sim = getJobInfo(sys.argv)
 
     parser.add_argument('--jobOptions', type=str, default = default_options, help='Name of the job options run by FCCSW (default config/geantSim.py')
@@ -532,9 +543,11 @@ if __name__=="__main__":
         if '--recPositions' in sys.argv:
             frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
+            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
         elif '--ntuple' in sys.argv:
             frun.write('python %s/python/Convert_Jan.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
+            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
         elif '--recTopoClusters' in sys.argv:
             if '--calibrate' in sys.argv:
                 frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+'/'+os.path.basename(outfile) ))

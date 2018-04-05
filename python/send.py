@@ -79,8 +79,11 @@ def getJobInfo(argv):
         return default_options,job_type,short_job_type,False
 
     elif '--recTopoClusters' in argv:
-        default_options = 'config/recTopoClusters.py'
-        job_type = "reco/topoClusters"
+        if not '--version':
+            default_options = 'config/recTopoClusters.py'
+        else:
+            default_options = 'config/recTopoClusters_v01.py'
+        job_type = "ntup/topoClusters"
         short_job_type = "recTopo"
         return default_options,job_type,short_job_type,False
 
@@ -104,11 +107,13 @@ def getJobInfo(argv):
         default_options = 'config/recPileupNoisePerCellAndCluster.py'
         job_type = "ana/pileup"
         short_job_type = "pileup"
+        return default_options,job_type,short_job_type,False
 
     elif '--mergeMinBias' in sys.argv:
         default_options = 'config/mergeMinBias.py'
         job_type = "ana/merged" 
         short_job_type = "mergeMinBias"
+        return default_options,job_type,short_job_type,False
 
     else:
         default_options = 'config/geantSim.py'
@@ -163,7 +168,7 @@ if __name__=="__main__":
     parser.add_argument("--tripletTracker", action="store_true", help="Use triplet tracker layout instead of baseline")
 
     windowSize = "7x17"
-
+#
 #    sim = False
 #    if '--recPositions' in sys.argv:
 #        default_options = 'config/recPositions.py'
@@ -555,8 +560,9 @@ if __name__=="__main__":
             frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/%s \n'%(current_dir,outfile,outfile+'_ntuple.root'))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile+'_ntuple.root',outdir))
         elif '--pileup' in sys.argv:
-            frun.write('mkdir %s \n'%(outdir+'/'+windowSize+'/'))
-            frun.write('hadd -f %s $JOBDIR/%s %s \n'%(outdir+'/'+windowSize+'/'+outfile, outfile, outdir+'/'+outfile))
+            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
+#            frun.write('mkdir %s \n'%(outdir+'/'+windowSize+'/'))
+#            frun.write('hadd -f %s $JOBDIR/%s %s \n'%(outdir+'/'+windowSize+'/'+outfile, outfile, outdir+'/'+outfile))
        
         elif not '--mergeMinBias' in sys.argv:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))

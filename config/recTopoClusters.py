@@ -189,7 +189,7 @@ if elNoise:
                                             cells="ECalBarrelCellsNoise")
     
     # HCal Barrel noise
-    noiseHcal = NoiseCaloCellsFlatTool("HCalNoise", cellNoise = 0.0009)
+    noiseHcal = NoiseCaloCellsFlatTool("HCalNoise", cellNoise = 0.009)
     
     hcalgeo = NestedVolumesCaloTool("HcalGeo",
                                     activeVolumeName = hcalVolumeName,
@@ -228,7 +228,7 @@ if elNoise:
     createTopoInputNoise.hcalFwdCells.Path = "emptyCaloCells"
     
     readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
-                                           fileName = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_segHcal.root",
+                                           fileName = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_segHcal_electronicsNoiseLevel.root",
                                            OutputLevel = DEBUG)
     
     # Topo-Cluster Algorithm 

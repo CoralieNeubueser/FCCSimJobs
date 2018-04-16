@@ -79,10 +79,9 @@ python python/send.py --singlePart --particle -211 -e 10 -n 10 -N 1 --condor
 python python/send.py --physics --process Zqq --pt 1000 -n 10 -N 1 --lsf
 python python/send.py --physics --process Haa -n 10 -N 1 --lsf
 ```
-<<<<<<< HEAD
 to send flat distributed energetic particles (from 10GeV to 1TeV) 
 ```
-python send.py --version v02_pre --singlePart --particle 11 -e 10 --flat -n 100 -N 1 --lsf --queue 1nh --etaMin 0.36 --etaMax 0.36 --phiMax 0
+python send.py --singlePart --particle 11 -e 10 --flat -n 100 -N 1 --lsf --queue 1nh --etaMin 0.36 --etaMax 0.36 --phiMax 0
 ```
 Reconstruction:
 
@@ -104,7 +103,6 @@ python python/send.py --singlePart --particle -211 -e 10 -N 1 --condor --recSlid
 python python/send.py --physics --process Zqq --pt 1000 -N 1 --lsf --recSlidingWindow
 python python/send.py --physics --process Haa  -N 1 --lsf --recSlidingWindow
 python python/send.py --local inits/CellPositions.py --singlePart --particle 11 -e 100 -N 1 --condor --recPositions
->>>>>>> b0762eedca3e50e4f12b00bbe8f78beb7a66cbee
 ```
 
 Miscellaneous

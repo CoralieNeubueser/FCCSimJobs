@@ -7,7 +7,7 @@ simparser.add_argument('-N','--numEvents',  type=int, help='Number of simulation
 simparser.add_argument("--physics", action='store_true', help="Physics events")
 
 simparser.add_argument("--addElectronicsNoise", action='store_true', help="Add electronics noise (default: false)")
-simparser.add_argument("--addPileupNoise", action='store_true', help="Add pileup noise (default: false)")
+simparser.add_argument("--addPileupNoise", action='store_true', help="Add pileup noise")
 simparser.add_argument("--calibrate", action='store_true', help="Calibrate clusters (default: false)")
 
 simargs, _ = simparser.parse_known_args()
@@ -17,7 +17,7 @@ print "==      GENERAL SETTINGS       ==="
 print "=================================="
 num_events = simargs.numEvents
 input_name = simargs.inName
-output_name = simargs.outName
+output_name = 'clusters.root'
 elNoise = simargs.addElectronicsNoise
 puNoise = simargs.addPileupNoise
 calib = simargs.calibrate
@@ -95,7 +95,7 @@ hcalFieldValues=[8]
 from Configurables import ApplicationMgr, FCCDataSvc, PodioInput, PodioOutput
 podioevent = FCCDataSvc("EventDataSvc", input=input_name)
 
-podioinput = PodioInput("PodioReader", collections = ["ECalBarrelCells", "HCalBarrelCells", "HCalExtBarrelCells", "ECalEndcapCells", "HCalEndcapCells", "ECalFwdCells", "HCalFwdCells", "TailCatcherCells","GenParticles","GenVertices"], OutputLevel = DEBUG)
+podioinput = PodioInput("PodioReader", collections = ["TrackerPositionedHits", "ECalBarrelCells", "HCalBarrelCells", "HCalExtBarrelCells", "ECalEndcapCells", "HCalEndcapCells", "ECalFwdCells", "HCalFwdCells", "TailCatcherCells","GenParticles","GenVertices"], OutputLevel = DEBUG)
 
 ##############################################################################################################                                                                                                                 
 #######                                       RECALIBRATE ECAL                                   #############                                                                                                                   
@@ -548,7 +548,7 @@ positionsClusterBarrel = CreateCaloCellPositions("positionsClusterBarrel",
 
 # PODIO algorithm
 out = PodioOutput("out", OutputLevel=DEBUG)
-out.outputCommands = ["drop *", "keep GenParticles", "keep GenVertices", "keep caloClustersBarrel", "keep calibCaloClustersBarrel", "keep caloClusterBarrelCells", "keep calibCaloClusterBarrelCells", "keep calibCaloClusterBarrelCellPositions"]
+out.outputCommands = ["drop *", "keep GenParticles", "keep GenVertices", "keep TrackerPositionedHits", "keep caloClustersBarrel", "keep calibCaloClustersBarrel", "keep caloClusterBarrelCells", "keep caloClusterBarrelCellPositions", "keep calibCaloClusterBarrelCells", "keep calibCaloClusterBarrelCellPositions"]
 out.filename = output_name
 
 if elNoise or puNoise:

@@ -2,12 +2,12 @@ yamldir='/afs/cern.ch/work/h/helsens/public/FCCDicts/yaml/FCC/simu/'
 indir='/eos/experiment/fcc/hh/simulation/samples/'
 statfile='/afs/cern.ch/user/h/helsens/www/data/statsimu_FCC.html'
 webfile='/afs/cern.ch/user/h/helsens/www/data/FCCsim_VERSION.txt'
-
+import sys
+import argparse
 
 #__________________________________________________________
 if __name__=="__main__":
 
-    import argparse
     parser = argparse.ArgumentParser()
 
     jobTypeGroup = parser.add_mutually_exclusive_group(required = True) # Type of events to generate
@@ -59,4 +59,14 @@ if __name__=="__main__":
         webfile=webfile.replace('VERSION', args.version)
         printdic=prt.printer(yamldir,indir,webfile, args.version)
         printdic.run()
+
+    elif args.remove:
+        if args.process=='':
+            print 'need to specify a process, exit'
+            sys.exit(3)
+ 
+        print 'remove process %s from eos and database'%args.process
+        import remove as rmp
+        remove = rmp.remove(args.process, indir, yamldir, args.version)
+        remove.remove()
 

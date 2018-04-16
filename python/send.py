@@ -2,7 +2,6 @@ path_to_INIT = '/cvmfs/fcc.cern.ch/sw/views/releases/0.9.1/x86_64-slc6-gcc62-opt
 path_to_LHE = '/afs/cern.ch/work/h/helsens/public/FCCsoft/FlatGunLHEventProducer/'
 path_to_FCCSW = '/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj'
 yamldir='/afs/cern.ch/work/h/helsens/public/FCCDicts/yaml/FCC/simu/'
-version = 'v03'
 
 import glob, os, sys
 import commands
@@ -65,7 +64,7 @@ def takeOnlyNonexistingFiles(files, output):
 def getJobInfo(argv):
     if '--recPositions' in argv:
         default_options = 'config/recPositions.py'
-        job_type = "reco/positions"
+        job_type = "ntup/positions"
         short_job_type = "recPos"
         return default_options,job_type,short_job_type,False
 
@@ -79,16 +78,22 @@ def getJobInfo(argv):
         return default_options,job_type,short_job_type,False
 
     elif '--recTopoClusters' in argv:
-        if not '--version':
+        if not '--version' in argv:
             default_options = 'config/recTopoClusters.py'
         else:
             default_options = 'config/recTopoClusters_v01.py'
         job_type = "ntup/topoClusters"
+        if '--noise' in argv:
+            job_type = "ntup/topoClusters/electronicsNoise"
+        elif '--addPileupNoise' in argv:
+            job_type = "ntup/topoClusters/pileupNoise_mu100"
+        else:
+            job_type = "ntup/topoClusters/noNoise"
         short_job_type = "recTopo"
         return default_options,job_type,short_job_type,False
 
     elif '--ntuple' in argv:
-        default_options = '....' # TODO how ?
+        default_options = 'config/recPositions.py'
         job_type = "ntup"
         short_job_type = "ntup"
         return default_options,job_type,short_job_type,False
@@ -162,7 +167,7 @@ if __name__=="__main__":
     jobTypeGroup.add_argument("--trackerPerformance", action='store_true', help="Tracker-only performance studies")
 
     parser.add_argument("--noise", action='store_true', help="Add electronics noise")
-    parser.add_argument("--addPileupNoise", action='store_true', help="Add pile-up noise")
+    parser.add_argument("--addPileupNoise", action='store_true', help="Add pile-up noise in qudrature to electronics noise")
     parser.add_argument("--calibrate", action='store_true', help="Calibrate Topo-cluster")
 
     parser.add_argument("--tripletTracker", action="store_true", help="Use triplet tracker layout instead of baseline")
@@ -315,8 +320,8 @@ if __name__=="__main__":
         etaMax = args.etaMax
         phiMin = args.phiMin
         phiMax = args.phiMax
-        flat = args.flat
         pdg = args.particle
+        flat = args.flat
         particle_human_names = {11: 'electron', -11: 'positron', -13: 'mup', 13: 'mum', 22: 'photon', 111: 'pi0', 211: 'pip', -211: 'pim', 130: "K0L", 0:"geantino"}
         print "=================================="
         print "==       SINGLE PARTICLES      ==="
@@ -339,11 +344,10 @@ if __name__=="__main__":
             print "phi: from ", phiMin, " to ", phiMax
             if not(phiMin == 0 and phiMax == 2*pi):
                 eta_str += "_phiFrom" + str(decimal.Decimal(str(phiMin)).normalize()).replace('-','M') + "To" + str(decimal.Decimal(str(phiMax)).normalize()).replace('-','M')
-        if flat:
-            job_dir = "singlePart/" + particle_human_names[pdg] + "/" + b_field_str + "/" + eta_str + "/flat"
-        else:
-            job_dir = "singlePart/" + particle_human_names[pdg] + "/" + b_field_str + "/" + eta_str + "/" + str(energy) + "GeV/"
         job_dir = os.path.join("singlePart", particle_human_names[pdg], b_field_str, eta_str, str(energy) + "GeV")
+        if flat:
+            job_dir = "singlePart/" + particle_human_names[pdg] + "/" + b_field_str + "/" + eta_str + "/flat/"
+
     elif args.physics:
         print "=================================="
         print "==           PHYSICS           ==="
@@ -433,7 +437,10 @@ if __name__=="__main__":
                 os.system("mkdir -p %s"%yamldir_process)
 
             infile_split = re.split(r'[_.]',infile)
-            seed = infile_split[1]
+            if args.version=="v02_pre":
+                seed = infile_split[3]
+            else:
+                seed = infile_split[1]
             myyaml = my.makeyaml(yamldir_process, seed)
         
             if not myyaml: 
@@ -476,9 +483,9 @@ if __name__=="__main__":
         if args.noise:
             common_fccsw_command += ' --addElectronicsNoise'
         if args.addPileupNoise:
-            common_fccsw_command += ' --addPileupNoise'        
+            common_fccsw_command += ' --addPileupNoise'
         if args.calibrate:
-            common_fccsw_command += ' --calibrate'
+            common_fccsw_command += ' --calibrate'        
         if args.physics:
             common_fccsw_command += ' --physics'
         print '-------------------------------------'
@@ -554,11 +561,14 @@ if __name__=="__main__":
             frun.write('rm edm.root \n')
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
         elif '--recTopoClusters' in sys.argv:
+            frun.write('python %s/python/Convert.py $JOBDIR/clusters.root $JOBDIR/%s\n'%(current_dir,outfile))
+            reco_path = outdir.replace('/ntup/', '/reco/')
+            if not ut.dir_exist(reco_path):
+                os.system("mkdir -p %s"%(reco_path))
+            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/clusters.root %s\n'%(reco_path+'/'+outfile))
             if '--calibrate' in sys.argv:
-                frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+'/'+os.path.basename(outfile) ))
+                frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+'/'+outfile ))
                 frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
-            frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/%s \n'%(current_dir,outfile,outfile+'_ntuple.root'))
-            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile+'_ntuple.root',outdir))
         elif '--pileup' in sys.argv:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
 #            frun.write('mkdir %s \n'%(outdir+'/'+windowSize+'/'))
@@ -571,13 +581,16 @@ if __name__=="__main__":
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/output_pileupOverlay.root %s_merged_%sev.root\n'%( (outdir+'/'+outfile), num_events ))
             frun.write('rm $JOBDIR/output_pileupOverlay.root \n')
             
+        if not args.no_eoscopy:
+          frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
+          frun.write('rm $JOBDIR/%s \n'%(outfile))
         frun.close()
        
         if args.lsf:
             cmdBatch="bsub -M 4000000 -R \"pool=40000\" -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
             batchid=-1
             job,batchid=ut.SubmitToLsf(cmdBatch,10)
-            ut.yamlstatus(yamlcheck, uid, False)
+            ut.yamlstatus(yamlcheck, uid.replace("%s/"%version,""), False)
         elif args.no_submit:
             job = 0
             print "scripts generated in ", os.path.join(logdir, frunname),
@@ -613,7 +626,7 @@ if __name__=="__main__":
             print cmdBatch
             batchid=-1
             job,batchid=ut.SubmitToCondor(cmdBatch,10)
-            ut.yamlstatus(yamlcheck, uid, False)
+            ut.yamlstatus(yamlcheck, uid.replace("%s/"%version,""), False)
 
         nbjobsSub+=job
 

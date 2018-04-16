@@ -404,5 +404,5 @@ ApplicationMgr(
     EvtSel = 'NONE',
     EvtMax   = num_events,
     ExtSvc = [podioevent, geoservice, geantservice],
-    OutputLevel = VERBOSE
+#    OutputLevel = VERBOSE
 )

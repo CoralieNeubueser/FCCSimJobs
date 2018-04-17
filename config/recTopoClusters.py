@@ -552,7 +552,7 @@ out.outputCommands = ["drop *", "keep GenParticles", "keep GenVertices", "keep T
 out.filename = output_name
 
 if elNoise or puNoise:
-    out.outputCommands += ["keep caloClustersBarrelNoise","keep calibCaloClustersBarrelNoise", "keep caloClusterBarrelNoiseCells",  "keep calibCaloClusterBarrelNoiseCells", "keep caloClusterBarrelCellPositions", "keep calibCaloClusterBarrelCellPositions"]
+    out.outputCommands += ["keep ECalBarrelCellsNoise", "keep HCalBarrelCellsNoise", "keep caloClustersBarrelNoise","keep calibCaloClustersBarrelNoise", "keep caloClusterBarrelNoiseCells",  "keep calibCaloClusterBarrelNoiseCells", "keep caloClusterBarrelCellPositions", "keep calibCaloClusterBarrelCellPositions"]
 out.filename = output_name
 
 #CPU information

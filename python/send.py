@@ -556,10 +556,12 @@ if __name__=="__main__":
             frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
+ 
         elif '--ntuple' in sys.argv:
             frun.write('python %s/python/Convert_Jan.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
+        
         elif '--recTopoClusters' in sys.argv:
             frun.write('python %s/python/Convert.py $JOBDIR/clusters.root $JOBDIR/%s\n'%(current_dir,outfile))
             reco_path = outdir.replace('/ntup/', '/reco/')
@@ -574,16 +576,13 @@ if __name__=="__main__":
 #            frun.write('mkdir %s \n'%(outdir+'/'+windowSize+'/'))
 #            frun.write('hadd -f %s $JOBDIR/%s %s \n'%(outdir+'/'+windowSize+'/'+outfile, outfile, outdir+'/'+outfile))
        
-        elif not '--mergeMinBias' in sys.argv:
+        elif not '--mergeMinBias' in sys.argv or not args.no_eoscopy:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
             frun.write('rm $JOBDIR/%s \n'%(outfile))
         else:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/output_pileupOverlay.root %s_merged_%sev.root\n'%( (outdir+'/'+outfile), num_events ))
             frun.write('rm $JOBDIR/output_pileupOverlay.root \n')
             
-        if not args.no_eoscopy:
-          frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
-          frun.write('rm $JOBDIR/%s \n'%(outfile))
         frun.close()
        
         if args.lsf:

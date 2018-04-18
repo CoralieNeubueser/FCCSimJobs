@@ -86,7 +86,7 @@ def getJobInfo(argv):
         if '--noise' in argv:
             job_type = "ntup/topoClusters/electronicsNoise"
         elif '--addPileupNoise' in argv:
-            job_type = "ntup/topoClusters/pileupNoise_mu100"
+            job_type = "ntup/topoClusters/pileupNoise/mu1000"
         else:
             job_type = "ntup/topoClusters/noNoise"
         short_job_type = "recTopo"

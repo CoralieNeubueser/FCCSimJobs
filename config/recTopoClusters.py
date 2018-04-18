@@ -40,7 +40,7 @@ detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_De
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
                   path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
-#                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
+                  #                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
                   path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Endcaps_coneCryo.xml',
                   path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Forward_coneCryo.xml',
                   path_to_detector+'/Detector/DetFCChhTailCatcher/compact/FCChh_TailCatcher.xml',
@@ -74,7 +74,7 @@ tailCatcherReadoutName = "Muons_Readout"
 ecalBarrelNoisePath = "/afs/cern.ch/user/a/azaborow/public/FCCSW/elecNoise_ecalBarrel_50Ohm_traces2_2shieldWidth_noise.root"
 ecalBarrelNoiseHistName = "h_elecNoise_fcc_"
 # Geometry details to add noise to every Calo cell and paths to root files that have the noise const per cell
-pileupNoisePath = "/afs/cern.ch/work/c/cneubuse/public/FCChh/pileupNoiseBarrel_mu100.root"
+pileupNoisePath = "/afs/cern.ch/work/c/cneubuse/public/FCChh/pileupNoiseBarrel_mu1000.root"
 ecalBarrelPileupNoiseHistName = "h_pileup_ecal_layer"
 hcalBarrelPileupNoiseHistName = "h_pileup_hcal_layer"
 ecalBarrelPileupOffsetHistName = "h_mean_pileup_ecal_layer"
@@ -97,9 +97,9 @@ podioevent = FCCDataSvc("EventDataSvc", input=input_name)
 
 podioinput = PodioInput("PodioReader", collections = ["TrackerPositionedHits", "ECalBarrelCells", "HCalBarrelCells", "HCalExtBarrelCells", "ECalEndcapCells", "HCalEndcapCells", "ECalFwdCells", "HCalFwdCells", "TailCatcherCells","GenParticles","GenVertices"], OutputLevel = DEBUG)
 
-##############################################################################################################                                                                                                                 
-#######                                       RECALIBRATE ECAL                                   #############                                                                                                                   
-##############################################################################################################               
+##############################################################################################################
+#######                                       RECALIBRATE ECAL                                   #############
+##############################################################################################################
 
 from Configurables import CalibrateInLayersTool, CreateCaloCells
 recalibEcalBarrel = CalibrateInLayersTool("RecalibrateEcalBarrel",
@@ -118,24 +118,24 @@ recreateEcalBarrelCells.cells.Path="ECalBarrelCellsRedo"
 ##############################################################################################################
 
 #Configure tools for calo cell positions
-from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsCaloDiscsTool, CellPositionsTailCatcherTool 
-ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel", 
-                                         readoutName = ecalBarrelReadoutName, 
+from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsCaloDiscsTool, CellPositionsTailCatcherTool
+ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel",
+                                         readoutName = ecalBarrelReadoutName,
                                          OutputLevel = INFO)
-EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC", 
-                                       readoutName = ecalEndcapReadoutName, 
+EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC",
+                                       readoutName = ecalEndcapReadoutName,
                                        OutputLevel = INFO)
-ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd", 
-                                          readoutName = ecalFwdReadoutName, 
+ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd",
+                                          readoutName = ecalFwdReadoutName,
                                           OutputLevel = INFO)
-HCalBcellVols = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrelVols", 
-                                                 readoutName = hcalBarrelReadoutVolume, 
+HCalBcellVols = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrelVols",
+                                                 readoutName = hcalBarrelReadoutVolume,
                                                  OutputLevel = INFO)
-HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC", 
-                                      readoutName = hcalEndcapReadoutName, 
+HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC",
+                                      readoutName = hcalEndcapReadoutName,
                                       OutputLevel = INFO)
-HCalFwdcells = CellPositionsCaloDiscsTool("CellPositionsHCalFwd", 
-                                          readoutName = hcalFwdReadoutName, 
+HCalFwdcells = CellPositionsCaloDiscsTool("CellPositionsHCalFwd",
+                                          readoutName = hcalFwdReadoutName,
                                           OutputLevel = INFO)
 
 ##############################################################################################################
@@ -187,10 +187,10 @@ if elNoise:
                                             noiseTool = noiseBarrel,
                                             hits="ECalBarrelCellsRedo",
                                             cells="ECalBarrelCellsNoise")
-    
+
     # HCal Barrel noise
     noiseHcal = NoiseCaloCellsFlatTool("HCalNoise", cellNoise = 0.009)
-    
+
     hcalgeo = NestedVolumesCaloTool("HcalGeo",
                                     activeVolumeName = hcalVolumeName,
                                     activeFieldName = hcalIdentifierName,
@@ -226,12 +226,12 @@ if elNoise:
     createTopoInputNoise.hcalExtBarrelCells.Path = "emptyCaloCells"
     createTopoInputNoise.hcalEndcapCells.Path = "emptyCaloCells"
     createTopoInputNoise.hcalFwdCells.Path = "emptyCaloCells"
-    
+
     readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
                                            fileName = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_segHcal_electronicsNoiseLevel.root",
                                            OutputLevel = DEBUG)
-    
-    # Topo-Cluster Algorithm 
+
+    # Topo-Cluster Algorithm
     # Seed and neighbour thresholds 4 - 2 - 0 w/noise
     createTopoClustersNoise = CaloTopoCluster("CreateTopoClustersNoise",
                                               TopoClusterInput = createTopoInputNoise,
@@ -239,7 +239,7 @@ if elNoise:
                                               neigboursTool = readNeighboursMap,
                                               # tool to get noise level per cellid
                                               noiseTool = readNoisyCellsMap,
-                                                # cell positions tools for all sub-systems
+                                              # cell positions tools for all sub-systems
                                               positionsECalBarrelTool = ECalBcells,
                                               positionsHCalBarrelTool = HCalBcellVols,
                                               seedSigma = 4,
@@ -248,7 +248,7 @@ if elNoise:
                                               OutputLevel = INFO)
     createTopoClustersNoise.clusters.Path = "caloClustersBarrelNoise"
     createTopoClustersNoise.clusterCells.Path = "caloClusterBarrelNoiseCells"
- 
+
     if (calib) :
         from Configurables import CreateCaloClusters
         calibrateClustersNoise = CreateCaloClusters("CalibrateClustersNoise",
@@ -264,13 +264,13 @@ if elNoise:
                                                     ehHCal = 1.1,
                                                     fractionECal = 0.8,
                                                     OutputLevel = DEBUG)
-        
+
         THistSvc().Output = ["rec DATAFILE='calibrateClusterNoise_histograms.root' TYP='ROOT' OPT='RECREATE'"]
         THistSvc().PrintAll=True
         THistSvc().AutoSave=True
         THistSvc().AutoFlush=True
         THistSvc().OutputLevel=INFO
-        
+
         from Configurables import CreateCaloCellPositions
         positionsCalibClusterBarrelNoise = CreateCaloCellPositions("positionsCalibClusterBarrelNoise",
                                                                    positionsECalBarrelTool = ECalBcells,
@@ -283,19 +283,19 @@ if elNoise:
                                                                    hits = "calibCaloClusterBarrelNoiseCells",
                                                                    positionedHits = "calibCaloClusterBarrelNoiseCellPositions",
                                                                    OutputLevel = INFO)
- 
+
     from Configurables import CreateCaloCellPositions
     positionsClusterBarrelNoise = CreateCaloCellPositions("positionsClusterBarrelNoise",
-                                                               positionsECalBarrelTool = ECalBcells,
-                                                               positionsHCalBarrelTool = HCalBcellVols,
-                                                               positionsHCalExtBarrelTool = HCalBcellVols,
-                                                               positionsEMECTool = EMECcells,
-                                                               positionsHECTool = HECcells,
-                                                               positionsEMFwdTool = ECalFwdcells,
-                                                               positionsHFwdTool = HCalFwdcells,
-                                                               hits = "caloClusterBarrelNoiseCells",
-                                                               positionedHits = "caloClusterBarrelNoiseCellPositions",
-                                                               OutputLevel = INFO)
+                                                          positionsECalBarrelTool = ECalBcells,
+                                                          positionsHCalBarrelTool = HCalBcellVols,
+                                                          positionsHCalExtBarrelTool = HCalBcellVols,
+                                                          positionsEMECTool = EMECcells,
+                                                          positionsHECTool = HECcells,
+                                                          positionsEMFwdTool = ECalFwdcells,
+                                                          positionsHFwdTool = HCalFwdcells,
+                                                          hits = "caloClusterBarrelNoiseCells",
+                                                          positionedHits = "caloClusterBarrelNoiseCellPositions",
+                                                          OutputLevel = INFO)
 ##############################################################################################################
 #######                          NOISE/NO NOISE TOOL FOR CLUSTER THRESHOLDS                      #############
 ##############################################################################################################
@@ -329,16 +329,16 @@ if puNoise:
                                             noiseTool = noiseBarrel,
                                             hits="ECalBarrelCellsRedo",
                                             cells="ECalBarrelCellsNoise")
-    
+
     # HCal Barrel noise
     noiseHcal = NoiseCaloCellsFromFileTool("NoiseBarrel",
-                                             readoutName = hcalBarrelReadoutVolume,
-                                            cellPositionsTool = HCalBcellVols,
-                                             noiseFileName = pileupNoisePath,
-                                             elecNoiseHistoName = hcalBarrelPileupNoiseHistName,
-                                             activeFieldName = "layer",
-                                             addPileup = False,
-                                             numRadialLayers = 10)
+                                           readoutName = hcalBarrelReadoutVolume,
+                                           cellPositionsTool = HCalBcellVols,
+                                           noiseFileName = pileupNoisePath,
+                                           elecNoiseHistoName = hcalBarrelPileupNoiseHistName,
+                                           activeFieldName = "layer",
+                                           addPileup = False,
+                                           numRadialLayers = 10)
 
     hcalgeo = NestedVolumesCaloTool("HcalGeo",
                                     activeVolumeName = hcalVolumeName,
@@ -375,12 +375,12 @@ if puNoise:
     createTopoInputNoise.hcalExtBarrelCells.Path = "emptyCaloCells"
     createTopoInputNoise.hcalEndcapCells.Path = "emptyCaloCells"
     createTopoInputNoise.hcalFwdCells.Path = "emptyCaloCells"
-    
+
     readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
-                                           fileName = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_pileupNoiseLevel.root",
+                                           fileName = "/afs/cern.ch/work/c/cneubuse/public/FCChh/inBfield/cellNoise_map_segHcal_noiseLevelElectronicsPileup_mu1000.root",
                                            OutputLevel = DEBUG)
-    
-    # Topo-Cluster Algorithm 
+
+    # Topo-Cluster Algorithm
     # Seed and neighbour thresholds 4 - 2 - 0 w/noise
     createTopoClustersNoise = CaloTopoCluster("CreateTopoClustersNoise",
                                               TopoClusterInput = createTopoInputNoise,
@@ -388,7 +388,7 @@ if puNoise:
                                               neigboursTool = readNeighboursMap,
                                               # tool to get noise level per cellid
                                               noiseTool = readNoisyCellsMap,
-                                                # cell positions tools for all sub-systems
+                                              # cell positions tools for all sub-systems
                                               positionsECalBarrelTool = ECalBcells,
                                               positionsHCalBarrelTool = HCalBcellVols,
                                               seedSigma = 4,
@@ -397,7 +397,7 @@ if puNoise:
                                               OutputLevel = INFO)
     createTopoClustersNoise.clusters.Path = "caloClustersBarrelNoise"
     createTopoClustersNoise.clusterCells.Path = "caloClusterBarrelNoiseCells"
- 
+
     if (calib) :
         from Configurables import CreateCaloClusters
         calibrateClustersNoise = CreateCaloClusters("CalibrateClustersNoise",
@@ -413,13 +413,13 @@ if puNoise:
                                                     ehHCal = 1.1,
                                                     fractionECal = 0.8,
                                                     OutputLevel = DEBUG)
-        
+
         THistSvc().Output = ["rec DATAFILE='calibrateClusterNoise_histograms.root' TYP='ROOT' OPT='RECREATE'"]
         THistSvc().PrintAll=True
         THistSvc().AutoSave=True
         THistSvc().AutoFlush=True
         THistSvc().OutputLevel=INFO
-        
+
         from Configurables import CreateCaloCellPositions
         positionsCalibClusterBarrelNoise = CreateCaloCellPositions("positionsCalibClusterBarrelNoise",
                                                                    positionsECalBarrelTool = ECalBcells,
@@ -432,19 +432,19 @@ if puNoise:
                                                                    hits = "calibCaloClusterBarrelCellsNoise",
                                                                    positionedHits = "calibCaloClusterBarrelNoiseCellPositions",
                                                                    OutputLevel = INFO)
- 
+
     from Configurables import CreateCaloCellPositions
     positionsClusterBarrelNoise = CreateCaloCellPositions("positionsClusterBarrelNoise",
-                                                               positionsECalBarrelTool = ECalBcells,
-                                                               positionsHCalBarrelTool = HCalBcellVols,
-                                                               positionsHCalExtBarrelTool = HCalBcellVols,
-                                                               positionsEMECTool = EMECcells,
-                                                               positionsHECTool = HECcells,
-                                                               positionsEMFwdTool = ECalFwdcells,
-                                                               positionsHFwdTool = HCalFwdcells,
-                                                               hits = "caloClusterBarrelNoiseCells",
-                                                               positionedHits = "caloClusterBarrelNoiseCellPositions",
-                                                               OutputLevel = INFO)
+                                                          positionsECalBarrelTool = ECalBcells,
+                                                          positionsHCalBarrelTool = HCalBcellVols,
+                                                          positionsHCalExtBarrelTool = HCalBcellVols,
+                                                          positionsEMECTool = EMECcells,
+                                                          positionsHECTool = HECcells,
+                                                          positionsEMFwdTool = ECalFwdcells,
+                                                          positionsHFwdTool = HCalFwdcells,
+                                                          hits = "caloClusterBarrelNoiseCells",
+                                                          positionedHits = "caloClusterBarrelNoiseCellPositions",
+                                                          OutputLevel = INFO)
 
 ##############################################################################################################
 #######                                 TOPO-CLUSTERING                                          #############
@@ -473,7 +473,7 @@ createTopoInput.hcalExtBarrelCells.Path = "emptyCaloCells"
 createTopoInput.hcalEndcapCells.Path = "emptyCaloCells"
 createTopoInput.hcalFwdCells.Path = "emptyCaloCells"
 
-# Topo-Cluster Algorithm 
+# Topo-Cluster Algorithm
 # Seed and neighbour thresholds 4 - 0 - 0 if no noise added
 createTopoClusters = CaloTopoCluster("CreateTopoClusters",
                                      TopoClusterInput = createTopoInput,
@@ -491,9 +491,9 @@ createTopoClusters = CaloTopoCluster("CreateTopoClusters",
 createTopoClusters.clusters.Path = "caloClustersBarrel"
 createTopoClusters.clusterCells.Path = "caloClusterBarrelCells"
 
-##############################################################################################################                                                                                                                 
-#######                                       CALIBRATE TOPO-CLUSTERS                            #############               
-##############################################################################################################               
+##############################################################################################################
+#######                                       CALIBRATE TOPO-CLUSTERS                            #############
+##############################################################################################################
 
 if (calib) :
     from Configurables import CreateCaloClusters
@@ -510,13 +510,13 @@ if (calib) :
                                            ehHCal = 1.1,
                                            fractionECal = 0.8,
                                            OutputLevel = DEBUG)
-    
+
     THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]
     THistSvc().PrintAll=True
     THistSvc().AutoSave=True
     THistSvc().AutoFlush=True
     THistSvc().OutputLevel=INFO
-    
+
     from Configurables import CreateCaloCellPositions
     positionsCalibratedClusterBarrel = CreateCaloCellPositions("positionsCalibratedClusterBarrel",
                                                                positionsECalBarrelTool = ECalBcells,
@@ -530,9 +530,9 @@ if (calib) :
                                                                positionedHits = "calibCaloClusterBarrelCellPositions",
                                                                OutputLevel = INFO)
 
-##############################################################################################################                                                                                                                 
-#######                                       TOPO-CLUSTER CELL POSITIONS                        #############               
-##############################################################################################################               
+##############################################################################################################
+#######                                       TOPO-CLUSTER CELL POSITIONS                        #############
+##############################################################################################################
 from Configurables import CreateCaloCellPositions
 positionsClusterBarrel = CreateCaloCellPositions("positionsClusterBarrel",
                                                  positionsECalBarrelTool = ECalBcells,
@@ -577,7 +577,7 @@ if puNoise:
     list_of_algorithms += [createEcalBarrelCells, createHcalBarrelCells, createTopoClustersNoise]
     if calib:
         list_of_algorithms += [calibrateClustersNoise, positionsCalibClusterBarrelNoise]
-    
+
 else:
     list_of_algorithms += [createTopoClusters, positionsClusterBarrel]
     if calib:
@@ -590,4 +590,4 @@ ApplicationMgr(
     EvtSel = 'NONE',
     EvtMax   = num_events,
     ExtSvc = [geoservice, podioevent, audsvc],
-)
+    )

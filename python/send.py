@@ -564,6 +564,7 @@ if __name__=="__main__":
         
         elif '--recTopoClusters' in sys.argv:
             frun.write('python %s/python/Convert.py $JOBDIR/clusters.root $JOBDIR/%s\n'%(current_dir,outfile))
+            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
             reco_path = outdir.replace('/ntup/', '/reco/')
             if not ut.dir_exist(reco_path):
                 os.system("mkdir -p %s"%(reco_path))
@@ -571,6 +572,7 @@ if __name__=="__main__":
             if '--calibrate' in sys.argv:
                 frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+'/'+outfile ))
                 frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
+            frun.write('rm clusters.root \n')
         elif '--pileup' in sys.argv:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
 #            frun.write('mkdir %s \n'%(outdir+'/'+windowSize+'/'))

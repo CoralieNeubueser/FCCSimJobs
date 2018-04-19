@@ -569,12 +569,12 @@ list_of_algorithms = [podioinput,
                       createemptycells]
 
 if elNoise:
-    list_of_algorithms += [createEcalBarrelCells, createHcalBarrelCells, createTopoClustersNoise]
+    list_of_algorithms += [createEcalBarrelCells, createHcalBarrelCells, createTopoClustersNoise, positionsClusterBarrelNoise]
     if calib:
         list_of_algorithms += [calibrateClustersNoise, positionsCalibClusterBarrelNoise]
 
 if puNoise:
-    list_of_algorithms += [createEcalBarrelCells, createHcalBarrelCells, createTopoClustersNoise]
+    list_of_algorithms += [createEcalBarrelCells, createHcalBarrelCells, createTopoClustersNoise, positionsClusterBarrelNoise]
     if calib:
         list_of_algorithms += [calibrateClustersNoise, positionsCalibClusterBarrelNoise]
 

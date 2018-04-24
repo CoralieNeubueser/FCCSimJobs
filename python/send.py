@@ -89,6 +89,8 @@ def getJobInfo(argv):
             job_type = "ntup/topoClusters/pileupNoise/"
         else:
             job_type = "ntup/topoClusters/noNoise"
+        if '--calibrate' in argv:
+            job_type += "/calibrated/"
         short_job_type = 'recTopo'
         return default_options,job_type,short_job_type,False
 
@@ -381,7 +383,7 @@ if __name__=="__main__":
                 os.system("mkdir -p %s"%yamldir_process)
 
             infile_split = re.split(r'[_.]',infile)
-            if args.version=="v02_pre":
+            if args.version=="v02_pre" or args.version=="v01":
                 seed = infile_split[3]
             else:
                 seed = infile_split[1]

@@ -8,7 +8,7 @@ simparser.add_argument("--physics", action='store_true', help="Physics events")
 
 simparser.add_argument("--addElectronicsNoise", action='store_true', help="Add electronics noise (default: false)")
 simparser.add_argument("--addPileupNoise", action='store_true', help="Add pileup noise")
-simparser.add_argument("--mu", type=int, help="Number of pileup-events")
+simparser.add_argument("--mu", type=int, help="Number of pileup-events", default=0)
 simparser.add_argument("--calibrate", action='store_true', help="Calibrate clusters (default: false)")
 
 simargs, _ = simparser.parse_known_args()
@@ -265,10 +265,10 @@ if elNoise:
                                                     calibrate = True, # will not re-calibrate the ECal, but HCal cells are scaled to EM
                                                     ehECal = 1.,
                                                     ehHCal = 1.1,
-                                                    fractionECal = 0.8,
+                                                    fractionECal = 0.9,
                                                     OutputLevel = DEBUG)
 
-        THistSvc().Output = ["rec DATAFILE='calibrateClusterNoise_histograms.root' TYP='ROOT' OPT='RECREATE'"]
+        THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]
         THistSvc().PrintAll=True
         THistSvc().AutoSave=True
         THistSvc().AutoFlush=True
@@ -414,10 +414,10 @@ if puNoise:
                                                     calibrate = True,
                                                     ehECal = 1.,
                                                     ehHCal = 1.1,
-                                                    fractionECal = 0.8,
+                                                    fractionECal = 0.9,
                                                     OutputLevel = DEBUG)
 
-        THistSvc().Output = ["rec DATAFILE='calibrateClusterNoise_histograms.root' TYP='ROOT' OPT='RECREATE'"]
+        THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]
         THistSvc().PrintAll=True
         THistSvc().AutoSave=True
         THistSvc().AutoFlush=True
@@ -511,7 +511,7 @@ if (calib) :
                                            calibrate = True,
                                            ehECal = 1.,
                                            ehHCal = 1.1,
-                                           fractionECal = 0.8,
+                                           fractionECal = 0.9,
                                            OutputLevel = DEBUG)
 
     THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]

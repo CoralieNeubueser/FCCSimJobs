@@ -118,6 +118,35 @@ This is something that can not be done centrally yet as I do not have rights to 
 
 Expert mode
 ===========
+check for a given process
+```
+python python/run.py --check --version v03 --process physics/MinBias/bFieldOn/etaFull/simu
+```
+
+check for everything
+```
+python python/run.py --check --version v03
+```
+
+merge the yaml
+```
+python python/run.py --merge --version v03
+```
 
 python python/run.py --check --version v03 --process  physics/MinBias/bFieldOn/etaFull/simu  --force
 python python/run.py --clean --version v03
+=======
+clean the yaml from bad jobs
+```
+python python/run.py --clean --version v03
+```
+
+clean the yaml from old jobs that have not produced corrupted output files
+```
+python python/run.py --cleanold --version v03
+```
+
+make the web page
+```
+python python/run.py --web --version v03
+```

@@ -90,6 +90,12 @@ hcalVolumeName = ["moduleVolume", "wedgeVolume", "layerVolume"]
 hcalFieldNames=["system"]
 hcalFieldValues=[8]
 
+# Paramerters for cluster calibration
+benchmark_a = 1.07
+benchmark_b = 0.59
+benchmark_c = -1.76E-5
+fractionECal = 0.9
+
 ##############################################################################################################
 #######                                        INPUT                                             #############
 ##############################################################################################################
@@ -281,7 +287,10 @@ if elNoise:
                                                     calibrate = True, # will not re-calibrate the ECal, but HCal cells are scaled to EM
                                                     ehECal = 1.,
                                                     ehHCal = 1.1,
-                                                    fractionECal = 0.9,
+                                                    fractionECal = fractionECal,
+                                                    a = benchmark_a,
+                                                    b = benchmark_b,
+                                                    c = benchmark_c,
                                                     OutputLevel = DEBUG)
         
         THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]
@@ -431,7 +440,10 @@ if puNoise:
                                                     calibrate = True,
                                                     ehECal = 1.,
                                                     ehHCal = 1.1,
-                                                    fractionECal = 0.9,
+                                                    fractionECal = fractionECal,
+                                                    a = benchmark_a,
+                                                    b = benchmark_b,
+                                                    c = benchmark_c,
                                                     OutputLevel = DEBUG)
         
         THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]
@@ -518,6 +530,7 @@ createTopoClusters.clusterCells.Path = "caloClusterBarrelCells"
 if (calib) :
     from Configurables import CreateCaloClusters
     calibrateClusters = CreateCaloClusters("CalibrateClusters",
+                                           genParticles = "GenParticles",
                                            clusters = "caloClustersBarrel",
                                            outClusters = "calibCaloClustersBarrel",
                                            outCells = "calibCaloClusterBarrelCells",
@@ -528,7 +541,10 @@ if (calib) :
                                            calibrate = True,
                                            ehECal = 1.,
                                            ehHCal = 1.1,
-                                           fractionECal = 0.9,
+                                           fractionECal = fractionECal,
+                                           a = benchmark_a,
+                                           b = benchmark_b,
+                                           c = benchmark_c,
                                            OutputLevel = DEBUG)
     
     THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]

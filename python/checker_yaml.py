@@ -105,10 +105,18 @@ class checker_yaml():
             print 'eos seems to have problems, should check, will exit'
             sys.exit(3)
     
+
         for process in ldir:
             uid=process.replace(self.indir,"")
             if uid=="": continue
             if self.process!='' and uid!=self.process: continue
+            psplit=process.split('/')
+            isana=False
+            for a in psplit:
+                if a=="ana":isana=True
+            if isana:
+                continue
+            
             #if ut.yamlcheck(self.yamlcheck, uid) and not force :continue
             All_files = glob.glob("%s/output_*.root"%(process))
             if len(All_files)==0:continue

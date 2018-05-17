@@ -324,6 +324,9 @@ if __name__=="__main__":
     rundir = os.getcwd()
     nbjobsSub=0
 
+    if args.flat and not args.local == "inits/fastSD.py":
+        warning("Please note that '--flat' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/fastSD.py')", True)
+
     # first make sure the output path for root files exists
     outdir = os.path.join( output_path, version, job_dir, job_type)
     print "Output will be stored in ... ", outdir
@@ -516,7 +519,10 @@ if __name__=="__main__":
                 os.system("mkdir -p %s"%(reco_path))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/clusters.root %s\n'%(reco_path+'/'+outfile))
             if '--calibrate' in sys.argv:
-                frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( outdir+'/'+outfile ))
+                ana_path = outdir.replace('/ntup/', '/ana/')
+                if not ut.dir_exist(ana_path):
+                    os.system("mkdir -p %s"%(ana_path))
+                frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s_calibHistos.root\n'%( ana_path+'/'+outfile ))
                 frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
         elif '--pileup' in sys.argv:
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))

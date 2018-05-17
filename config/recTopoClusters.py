@@ -202,7 +202,7 @@ if elNoise:
     hcalgeo = NestedVolumesCaloTool("HcalGeo",
                                     activeVolumeName = hcalVolumeName,
                                     activeFieldName = hcalIdentifierName,
-                                    readoutName = hcalBarrelReadoutName,
+                                    readoutName = hcalBarrelReadoutVolume,
                                     fieldNames = hcalFieldNames,
                                     fieldValues = hcalFieldValues,
                                     OutputLevel = INFO)

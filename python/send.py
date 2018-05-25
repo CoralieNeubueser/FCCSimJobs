@@ -293,6 +293,8 @@ if __name__=="__main__":
         job_dir = os.path.join("singlePart", particle_human_names[pdg], b_field_str, eta_str, str(energy) + "GeV")
         if flat:
             job_dir = "singlePart/" + particle_human_names[pdg] + "/" + b_field_str + "/" + eta_str + "/flat/"
+            job_options = "config/geantSim_fastBarrel.py"
+            print "FCCSW job options: ", job_options
 
     elif args.physics:
         print "=================================="

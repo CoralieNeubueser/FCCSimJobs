@@ -4,6 +4,7 @@ simparser = argparse.ArgumentParser()
 simparser.add_argument('--inName', type=str, help='Name of the input file', required=True)
 simparser.add_argument('--outName', type=str, help='Name of the output file', required=True)
 simparser.add_argument('-N','--numEvents',  type=int, help='Number of simulation events to run', required=True)
+simparser.add_argument('--flat', action='store_true', help='flat energy distribution for single particle generation')
 
 simargs, _ = simparser.parse_known_args()
 
@@ -16,6 +17,7 @@ output_name = simargs.outName
 print "number of events = ", num_events
 print "input name: ", input_name
 print "output name: ", output_name
+print "reco Barrel only:  ", simargs.flat
 
 from Gaudi.Configuration import *
 ##############################################################################################################
@@ -25,13 +27,14 @@ path_to_detector = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/l
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
-                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
-                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
-                  path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Endcaps_coneCryo.xml',
-                  path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Forward_coneCryo.xml',
-                  path_to_detector+'/Detector/DetFCChhTailCatcher/compact/FCChh_TailCatcher.xml',
-                  path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Solenoids.xml',
-                  path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Shielding.xml']
+                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml']
+if not simargs.flat:
+    detectors_to_use += [path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
+                         path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Endcaps_coneCryo.xml',
+                         path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Forward_coneCryo.xml',
+                         path_to_detector+'/Detector/DetFCChhTailCatcher/compact/FCChh_TailCatcher.xml',
+                         path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Solenoids.xml',
+                         path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Shielding.xml']
 
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc", detectors = detectors_to_use, OutputLevel = WARNING)
@@ -151,28 +154,29 @@ from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNo
 ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel", 
                                     readoutName = ecalBarrelReadoutName, 
                                     OutputLevel = INFO)
-EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC", 
-                                    readoutName = ecalEndcapReadoutName, 
-                                    OutputLevel = DEBUG)
-ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd", 
-                                        readoutName = ecalFwdReadoutName, 
-                                        OutputLevel = INFO)
 HCalBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrel", 
                                               readoutName = hcalBarrelReadoutName, 
                                               OutputLevel = INFO)
-HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel", 
-                                                 readoutName = hcalExtBarrelReadoutName, 
-                                                 OutputLevel = INFO)
-HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC", 
-                                   readoutName = hcalEndcapReadoutName, 
-                                   OutputLevel = INFO)
-HCalFwdcells = CellPositionsCaloDiscsTool("CellPositionsHCalFwd", 
-                                        readoutName = hcalFwdReadoutName, 
-                                        OutputLevel = INFO)
-TailCatchercells = CellPositionsTailCatcherTool("CellPositionsTailCatcher", 
-                                                readoutName = tailCatcherReadoutName, 
-                                                centralRadius = 901.5,
-                                                OutputLevel = INFO)
+if not simargs.flat:
+    EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC", 
+                                           readoutName = ecalEndcapReadoutName, 
+                                           OutputLevel = DEBUG)
+    ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd", 
+                                              readoutName = ecalFwdReadoutName, 
+                                              OutputLevel = INFO)
+    HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel", 
+                                                     readoutName = hcalExtBarrelReadoutName, 
+                                                     OutputLevel = INFO)
+    HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC", 
+                                          readoutName = hcalEndcapReadoutName, 
+                                          OutputLevel = INFO)
+    HCalFwdcells = CellPositionsCaloDiscsTool("CellPositionsHCalFwd", 
+                                              readoutName = hcalFwdReadoutName, 
+                                              OutputLevel = INFO)
+    TailCatchercells = CellPositionsTailCatcherTool("CellPositionsTailCatcher", 
+                                                    readoutName = tailCatcherReadoutName, 
+                                                    centralRadius = 901.5,
+                                                    OutputLevel = INFO)
 
 # cell positions
 from Configurables import CreateCellPositions
@@ -186,36 +190,37 @@ positionsHcalBarrel = CreateCellPositions("positionsHcalBarrel",
                                           hits = "HCalBarrelCells", 
                                           positionedHits = "HCalBarrelCellPositions", 
                                           OutputLevel = INFO)
-positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel", 
-                                          positionsTool=HCalExtBcells, 
-                                          hits = "HCalExtBarrelCells", 
-                                          positionedHits = "HCalExtBarrelCellPositions", 
-                                          OutputLevel = INFO)
-positionsEcalEndcap = CreateCellPositions("positionsEcalEndcap", 
-                                          positionsTool=EMECcells, 
-                                          hits = "newECalEndcapCells", 
-                                          positionedHits = "ECalEndcapCellPositions", 
-                                          OutputLevel = INFO)
-positionsHcalEndcap = CreateCellPositions("positionsHcalEndcap", 
-                                          positionsTool=HECcells, 
-                                          hits = "newHCalEndcapCells", 
-                                          positionedHits = "HCalEndcapCellPositions", 
-                                          OutputLevel = INFO)
-positionsEcalFwd = CreateCellPositions("positionsEcalFwd", 
-                                          positionsTool=ECalFwdcells, 
-                                          hits = "ECalFwdCells", 
-                                          positionedHits = "ECalFwdCellPositions", 
-                                          OutputLevel = INFO)
-positionsHcalFwd = CreateCellPositions("positionsHcalFwd", 
-                                          positionsTool=HCalFwdcells, 
-                                          hits = "HCalFwdCells", 
-                                          positionedHits = "HCalFwdCellPositions", 
-                                          OutputLevel = INFO)
-positionsTailCatcher = CreateCellPositions("positionsTailCatcher", 
-                                          positionsTool=TailCatchercells, 
-                                          hits = "TailCatcherCells", 
-                                          positionedHits = "TailCatcherCellPositions", 
-                                          OutputLevel = INFO)
+if not simargs.flat:
+    positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel", 
+                                                 positionsTool=HCalExtBcells, 
+                                                 hits = "HCalExtBarrelCells", 
+                                                 positionedHits = "HCalExtBarrelCellPositions", 
+                                                 OutputLevel = INFO)
+    positionsEcalEndcap = CreateCellPositions("positionsEcalEndcap", 
+                                              positionsTool=EMECcells, 
+                                              hits = "newECalEndcapCells", 
+                                              positionedHits = "ECalEndcapCellPositions", 
+                                              OutputLevel = INFO)
+    positionsHcalEndcap = CreateCellPositions("positionsHcalEndcap", 
+                                              positionsTool=HECcells, 
+                                              hits = "newHCalEndcapCells", 
+                                              positionedHits = "HCalEndcapCellPositions", 
+                                              OutputLevel = INFO)
+    positionsEcalFwd = CreateCellPositions("positionsEcalFwd", 
+                                           positionsTool=ECalFwdcells, 
+                                           hits = "ECalFwdCells", 
+                                           positionedHits = "ECalFwdCellPositions", 
+                                           OutputLevel = INFO)
+    positionsHcalFwd = CreateCellPositions("positionsHcalFwd", 
+                                           positionsTool=HCalFwdcells, 
+                                           hits = "HCalFwdCells", 
+                                           positionedHits = "HCalFwdCellPositions", 
+                                           OutputLevel = INFO)
+    positionsTailCatcher = CreateCellPositions("positionsTailCatcher", 
+                                               positionsTool=TailCatchercells, 
+                                               hits = "TailCatcherCells", 
+                                               positionedHits = "TailCatcherCellPositions", 
+                                               OutputLevel = INFO)
 
 # PODIO algorithm
 out = PodioOutput("out", OutputLevel=DEBUG)
@@ -230,28 +235,27 @@ audsvc.Auditors = [chra]
 podioinput.AuditExecute = True
 recreateEcalBarrelCells.AuditExecute = True
 positionsEcalBarrel.AuditExecute = True
-positionsEcalEndcap.AuditExecute = True
-positionsEcalFwd.AuditExecute = True
 positionsHcalBarrel.AuditExecute = True
-positionsHcalExtBarrel.AuditExecute = True
-positionsHcalEndcap.AuditExecute = True
-positionsHcalFwd.AuditExecute = True
-positionsTailCatcher.AuditExecute = True
 out.AuditExecute = True
 
 list_of_algorithms = [podioinput,
                       recreateEcalBarrelCells,
-                      rewriteECalEC,
-                      rewriteHCalEC,
                       positionsEcalBarrel,
-                      positionsEcalEndcap,
-                      positionsEcalFwd, 
-                      positionsHcalBarrel, 
-                      positionsHcalExtBarrel, 
-                      positionsHcalEndcap, 
-                      positionsHcalFwd,
-                      positionsTailCatcher,
-                      out]
+                      positionsHcalBarrel]
+ 
+if not simargs.flat:
+    list_of_algorithms += [ rewriteECalEC,
+                            rewriteHCalEC,
+                            positionsEcalEndcap,
+                            positionsEcalFwd, 
+                            positionsHcalBarrel, 
+                            positionsHcalExtBarrel, 
+                            positionsHcalEndcap, 
+                            positionsHcalFwd,
+                            positionsTailCatcher,
+                            out]
+else:
+    list_of_algorithms += [out]
 
 ApplicationMgr(
     TopAlg = list_of_algorithms,

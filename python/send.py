@@ -293,8 +293,9 @@ if __name__=="__main__":
         job_dir = os.path.join("singlePart", particle_human_names[pdg], b_field_str, eta_str, str(energy) + "GeV")
         if flat:
             job_dir = "singlePart/" + particle_human_names[pdg] + "/" + b_field_str + "/" + eta_str + "/flat/"
-            job_options = "config/geantSim_fastBarrel.py"
-            print "FCCSW job options: ", job_options
+            if sim:
+                job_options = "config/geantSim_fastBarrel.py"
+                print "FCCSW job options: ", job_options
 
     elif args.physics:
         print "=================================="
@@ -326,8 +327,8 @@ if __name__=="__main__":
     rundir = os.getcwd()
     nbjobsSub=0
 
-    if args.flat and not args.local == "inits/fastSD.py":
-        warning("Please note that '--flat' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/fastSD.py')", True)
+    if args.flat and not args.local == "inits/fastSD.py" and not  args.local == "inits/TopoClusters.py":
+        warning("Please note that '--flat' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/fastSD.py' for sim and '--local inits/fastSD.py' for reco)", True)
 
     # first make sure the output path for root files exists
     outdir = os.path.join( output_path, version, job_dir, job_type)
@@ -439,6 +440,8 @@ if __name__=="__main__":
             common_fccsw_command += ' --calibrate'        
         if args.physics:
             common_fccsw_command += ' --physics'
+        if flat:
+            common_fccsw_command += ' --flat'
         print '-------------------------------------'
         print common_fccsw_command
         print '-------------------------------------'
@@ -504,7 +507,10 @@ if __name__=="__main__":
                 frun.write('%s --inNames %s\n'%(common_fccsw_command, listOfInputFiles))
            
         if '--recPositions' in sys.argv:
-            frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
+            if args.flat:
+                frun.write('python %s/python/Convert_Jan.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
+            else:
+                frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
  

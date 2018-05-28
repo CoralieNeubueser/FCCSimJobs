@@ -260,6 +260,8 @@ if __name__=="__main__":
     print "number of events = ", num_events
     print "output path: ", output_path
     print "FCCSW job options: ", job_options
+    flat = args.flat
+
     if args.singlePart:
         energy = args.energy
         etaMin = args.etaMin
@@ -267,7 +269,6 @@ if __name__=="__main__":
         phiMin = args.phiMin
         phiMax = args.phiMax
         pdg = args.particle
-        flat = args.flat
         particle_human_names = {11: 'electron', -11: 'positron', -13: 'mup', 13: 'mum', 22: 'photon', 111: 'pi0', 211: 'pip', -211: 'pim', 130: "K0L", 0:"geantino"}
         print "=================================="
         print "==       SINGLE PARTICLES      ==="

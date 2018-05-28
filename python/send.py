@@ -328,7 +328,7 @@ if __name__=="__main__":
     rundir = os.getcwd()
     nbjobsSub=0
 
-    if args.flat and not args.local == "inits/fastSD.py" and not  args.local == "inits/TopoClusters.py":
+    if args.flat and not args.local == "inits/fastSD.py" and not  args.local == "inits/reco.py":
         warning("Please note that '--flat' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/fastSD.py' for sim and '--local inits/fastSD.py' for reco)", True)
 
     # first make sure the output path for root files exists

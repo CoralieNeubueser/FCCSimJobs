@@ -77,7 +77,7 @@ from GaudiKernel import SystemOfUnits as units
 ##############################################################################################################
 #######                                         GEOMETRY                                         #############
 ##############################################################################################################
-path_to_detector = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj"
+path_to_detector = "/afs/cern.ch/work/c/cneubuse/public/FastSD/FCCSW/"
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',

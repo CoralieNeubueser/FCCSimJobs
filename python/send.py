@@ -112,6 +112,8 @@ def getJobInfo(argv):
             job_type = "reco/topoClusters/pileupNoise/"
         else:
             job_type = "reco/topoClusters/noNoise"
+        if '--calibrate' in argv:
+            job_type += "/calibrated/"
         short_job_type = 'recTopo'
         return default_options,job_type,short_job_type,False
 
@@ -214,6 +216,7 @@ if __name__=="__main__":
     recoTopoClusterGroup.add_argument('--sigma1', type=int, default=4, help='Energy threshold [in number of sigmas] for seeding')
     recoTopoClusterGroup.add_argument('--sigma2', type=int, default=2, help='Energy threshold [in number of sigmas] for neighbours')
     recoTopoClusterGroup.add_argument('--sigma3', type=int, default=0, help='Energy threshold [in number of sigmas] for last neighbours')
+    recoTopoClusterGroup.add_argument("--calibrate", action='store_true', help="Calibrate Topo-cluster")
 
     args, _ = parser.parse_known_args()
 
@@ -467,6 +470,8 @@ if __name__=="__main__":
             common_fccsw_command += ' --addElectronicsNoise'
         if args.addPileupNoise:
             common_fccsw_command += ' --addPileupNoise --mu ' + str(args.pileup)
+        if args.calibrate:
+            common_fccsw_command += ' --calibrate'
         if args.physics:
             common_fccsw_command += ' --physics'
         if '--local' in sys.argv:
@@ -537,7 +542,12 @@ if __name__=="__main__":
             if not ut.dir_exist(ntup_path):
                 os.system("mkdir -p %s"%(ntup_path))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/clusters.root %s/%s\n'%(ntup_path, outfile))
-            
+            if args.calibrate:
+                ana_path = ntup_path.replace('/ntup/', '/ana/')
+                if not ut.dir_exist(ana_path):
+                    os.system("mkdir -p %s"%(ana_path))
+                frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s\n'%( ana_path+'/'+outfile ))
+                frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
         if not args.no_eoscopy:
           frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
           frun.write('rm $JOBDIR/%s \n'%(outfile))

@@ -103,6 +103,12 @@ def getJobInfo(argv):
         short_job_type = "pileup"
         return default_options,job_type,short_job_type,False
 
+    elif '--addPileupToSignal' in argv:
+        default_options = 'config/overlayPileupWithSignal.py'
+        job_type = "simuPU"
+        short_job_type = "pileup"
+        return default_options,job_type,short_job_type,False
+ 
     elif '--recTopoClusters' in argv:
         default_options = 'config/recTopoClusters.py'
         job_type = "ntup/topoClusters"
@@ -161,7 +167,7 @@ if __name__=="__main__":
     parser.add_argument("--pythiaSmearVertex", action='store_true', help="Write vertex smearing parameters to pythia config file")
     parser.add_argument("--no_eoscopy", action='store_true',  help="DON'T copy result files to eos")
 
-    parser.add_argument('-n','--numEvents', type=int, help='Number of simulation events per job', required='--recPositions' not in sys.argv and '--recSlidingWindow' not in sys.argv and '--recTopoClusters' not in sys.argv and '--ntuple' not in sys.argv)
+    parser.add_argument('-n','--numEvents', type=int, help='Number of simulation events per job', required='--recPositions' not in sys.argv and '--recSlidingWindow' not in sys.argv and '--recTopoClusters' not in sys.argv and '--ntuple' not in sys.argv and '--addPileupToSignal' not in sys.argv)
     parser.add_argument('-N','--numJobs', type=int, default = 10, help='Number of jobs to submit')
     parser.add_argument('-o','--output', type=str, help='Path of the output on EOS', default="/eos/experiment/fcc/hh/simulation/samples/")
     parser.add_argument('-l','--log', type=str, help='Path of the logs', default = "BatchOutputs/")
@@ -174,12 +180,13 @@ if __name__=="__main__":
     jobTypeGroup.add_argument("--recTopoClusters", action='store_true', help="Reconstruction with topo-clusters")
     jobTypeGroup.add_argument("--estimatePileup", action='store_true', help="Estimate pileup from minbias events")
     jobTypeGroup.add_argument("--mergePileup", action='store_true', help="Estimate pileup from minbias events")
+    jobTypeGroup.add_argument('--addPileupToSignal', action="store_true", help='Add PU events to signal.')
     jobTypeGroup.add_argument("--ntuple", action='store_true', help="Conversion to ntuple")
     jobTypeGroup.add_argument("--trackerPerformance", action='store_true', help="Tracker-only performance studies")
     # Add noise on cluster level
     parser.add_argument("--noise", action='store_true', help="Add electronics noise")
     parser.add_argument("--addPileupNoise", action='store_true', help="Add pile-up noise in qudrature to electronics noise")
-    parser.add_argument('--pileup', type=int,  required = '--mergePileup' in sys.argv or '--addPileupNoise' in sys.argv, help='Pileup')
+    parser.add_argument('--pileup', type=int,  required = '--mergePileup' in sys.argv or '--addPileupNoise' in sys.argv or '--addPileupToSignal' in sys.argv, help='Pileup')
     parser.add_argument("--tripletTracker", action="store_true", help="Use triplet tracker layout instead of baseline")
 
     default_options,job_type,short_job_type,sim = getJobInfo(sys.argv)
@@ -254,20 +261,22 @@ if __name__=="__main__":
     print 'FCCSim version: ',version
     magnetic_field = not args.bFieldOff
     b_field_str = "bFieldOn" if not args.bFieldOff else "bFieldOff"
-    num_events = args.numEvents if sim else -1 # if reconstruction is done use -1 to run over all events in file
+    num_events = args.numEvents if sim else -1
     num_jobs = args.numJobs
     job_options = args.jobOptions
     output_path = args.output
-
+    
     ## Use Pileup valid only in certain cases!
     if args.addPileupNoise: # pileup is used to specify level of the pileup noise
         job_type = job_type.replace("pileupNoise", "pileupNoise/PU"+str(args.pileup))
         short_job_type += "PU"+str(args.pileup)
-        num_events = args.numEvents
     elif args.mergePileup: # merge cells from simulated events
         job_type = "simuPU"+str(args.pileup)
         short_job_type += "PU"+str(args.pileup)
         num_events = args.numEvents
+    elif args.addPileupToSignal: # merge cells from simulated events
+        job_type = "simuPU"+str(args.pileup)
+        short_job_type += "PU"+str(args.pileup)
     elif (args.recPositions or args.recTopoClusters or args.recSlidingWindow) and args.pileup: # if reconstruction is run on pileup (mixed) events
         job_type = job_type.replace("ntup", "ntupPU"+str(args.pileup)).replace("reco", "recoPU"+str(args.pileup))
         short_job_type += "PU"+str(args.pileup)
@@ -326,7 +335,7 @@ if __name__=="__main__":
             pt = args.pt
             print "LHE: ", LHE
             print "jet pt: ", pt
-            job_dir += "etaTo0.5/" + str(pt) + "GeV/"
+            job_dir += "etaTo"+str(args.etaMax)+"/" + str(pt) + "GeV/"
         else:
             LHE = False
             job_dir += "etaFull/"
@@ -346,6 +355,8 @@ if __name__=="__main__":
 
     if args.mergePileup and not args.local == "inits/pileup.py":
         warning("Please note that '--mergePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/pileup.py')", True)
+    if args.addPileupToSignal and not args.local == "inits/pileup.py":
+        warning("Please note that '--addPileupToSignal' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/pileup.py')", True)
     if args.estimatePileup and not args.local == "inits/pileup.py":
         warning("Please note that '--preparePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/pileup.py')", True)
     if args.recPositions and not args.local == "inits/reco.py":
@@ -358,7 +369,7 @@ if __name__=="__main__":
     print "Output will be stored in ... ", outdir
     if not sim:
         # if signal events are used (simu/) or mixed pileup events (simuPU.../)
-        if not args.mergePileup and not args.addPileupNoise and args.pileup and not (args.pileup == 0):
+        if not args.mergePileup and not args.addPileupNoise and not args.addPileupToSignal and args.pileup and not (args.pileup == 0):
             inputID = os.path.join(yamldir, version, job_dir, 'simuPU'+str(args.pileup))
         else:
             inputID = os.path.join(yamldir, version, job_dir, 'simu')
@@ -373,6 +384,14 @@ if __name__=="__main__":
         if instatus < num_jobs:
             num_jobs = instatus
             warning("Directory contains only " + str(instatus) + " files, using all for the reconstruction")
+
+    if args.addPileupToSignal: 
+        all_pileup_inputs=""
+        inputPileupID = os.path.join(yamldir, version, 'physics/MinBias/'+b_field_str+'/etaFull/simuPU'+str(args.pileup))
+        pileup_input_files = getInputFiles(inputPileupID)
+        for f in pileup_input_files:
+            all_pileup_inputs += " " + f # event pool = all inputs
+    
     # for the purpose of mixing pileup events all inputs must be passed to the config
     # merging pileup events will be done randomly from a given event pool
     if args.mergePileup:
@@ -382,7 +401,7 @@ if __name__=="__main__":
         seed=ut.getuid() # to generate new output name
         print 'seed  ',seed
         outfile = 'output_%i.root'%(seed)
-        print "Name of the output file: ", outfile
+        print "Name of the output file: ", outfile           
 
     os.system("mkdir -p %s"%outdir)
     # first make sure the output path exists
@@ -420,6 +439,9 @@ if __name__=="__main__":
             infile = os.path.basename(input_files[i])
             outfile = infile
             print "Name of the input file: ", infile
+            if args.addPileupToSignal :
+                pileupinfile = os.path.basename(pileup_input_files[i])
+                print "Name of the input file for pileup events: ", pileupinfile
 
             yamldir_process = '%s/%s'%(yamldir,uid)
             if not ut.dir_exist(yamldir_process):
@@ -476,8 +498,9 @@ if __name__=="__main__":
             common_fccsw_command += ' --physics'
         if '--local' in sys.argv:
             common_fccsw_command += ' --detectorPath ' + path_to_FCCSW
-        if args.mergePileup:
-            common_fccsw_command += ' --pileup ' + str(args.pileup)
+        if args.physics:
+            if args.mergePileup or args.addPileupToSignal:
+                common_fccsw_command += ' --pileup ' + str(args.pileup)
         if args.recPositions and args.pileup:
             common_fccsw_command += ' --prefixCollections merged '
         if args.recSlidingWindow:
@@ -531,6 +554,8 @@ if __name__=="__main__":
             frun.write('cd $JOBDIR\n')
             if args.mergePileup:
                 frun.write('%s --inName %s\n'%(common_fccsw_command, all_inputs))
+            elif args.addPileupToSignal:
+                frun.write('%s --inName %s --mu %i --inPileupFileNames %s\n'%( common_fccsw_command, input_files[i], args.pileup, all_pileup_inputs))
             else:
                 frun.write('%s --inName %s\n'%(common_fccsw_command, input_files[i]))
         if args.recPositions:

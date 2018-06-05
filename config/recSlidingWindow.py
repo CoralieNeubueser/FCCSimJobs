@@ -1,4 +1,4 @@
-import argparse, math
+import argparse
 simparser = argparse.ArgumentParser()
 
 simparser.add_argument('--inName', type=str, help='Name of the input file', required=True)
@@ -24,27 +24,6 @@ noise = simargs.addElectronicsNoise
 path_to_detector = simargs.detectorPath
 winEta = simargs.winEta
 winPhi = simargs.winPhi
-winEtaSeed = int(math.floor(winEta*2./4.))
-winPhiSeed = int(math.floor(winPhi*2./4.))
-winEtaPos = int(math.floor(winEta*2./4.))
-winPhiPos = int(math.floor(winPhi*2./4.))
-winEtaDup = int(math.floor(winEta*3./4.))
-winPhiDup = int(math.floor(winPhi*2./4.))
-
-## make sure that window size is odd
-if winEtaSeed %2 == 0:
-    winEtaSeed = winEtaSeed +1
-if winPhiSeed %2 == 0:
-    winPhiSeed = winPhiSeed +1
-if winEtaPos %2 == 0:
-    winEtaPos = winEtaPos +1 
-if winPhiPos %2 == 0:
-    winPhiPos = winPhiPos +1 
-if winEtaDup %2 == 0:
-    winEtaDup = winEtaDup +1 
-if winPhiDup %2 == 0:
-    winPhiDup = winPhiDup +1 
-
 enThreshold = simargs.enThreshold
 pileup = simargs.mu
 print "number of events = ", num_events
@@ -52,12 +31,6 @@ print "input name: ", input_name
 print "output name: ", output_name
 print "electronic noise in ECAL: ", noise
 print "detectors are taken from: ", path_to_detector
-print "seed cluster eta size: ", winEtaSeed
-print "seed cluster phi size: ", winPhiSeed
-print "pos cluster eta size: ", winEtaPos
-print "pos cluster phi size: ", winPhiPos
-print "dup cluster eta size: ", winEtaDup
-print "dup cluster phi size: ", winPhiDup
 print "final cluster eta size: ", winEta
 print "final cluster phi size: ", winPhi
 print "energy threshold for seeding cluster [GeV]: ", enThreshold
@@ -70,14 +43,12 @@ from Gaudi.Configuration import *
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
-                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
+                  # path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
+                  # path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
                   path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Endcaps_coneCryo.xml',
                   path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Forward_coneCryo.xml',
                   path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Solenoids.xml',
                   path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Shielding.xml']
-
-if not noise:
-    detectors_to_use += [path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml']
 
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc", detectors = detectors_to_use)
@@ -85,7 +56,7 @@ geoservice = GeoSvc("GeoSvc", detectors = detectors_to_use)
 # ECAL readouts
 ecalBarrelReadoutName = "ECalBarrelEta"
 ecalBarrelReadoutNamePhiEta = "ECalBarrelPhiEta"
-ecalEndcapReadoutName = "EMECPhiEta"
+ecalEndcapReadoutName = "EMECPhiEtaReco"
 ecalFwdReadoutName = "EMFwdPhiEta"
 ecalBarrelNoisePath = "/afs/cern.ch/user/a/azaborow/public/FCCSW/elecNoise_ecalBarrel_50Ohm_traces2_2shieldWidth_noise.root"
 ecalEndcapNoisePath = "/afs/cern.ch/user/n/novaj/public/elecNoise_emec_6layers.root"
@@ -195,13 +166,12 @@ if noise:
     towersNoise.hcalEndcapCells.Path = "HCalEndcapCells"
     towersNoise.hcalFwdCells.Path = "HCalFwdCells"
     createclustersNoise = CreateCaloClustersSlidingWindow("CreateCaloClustersNoise",
-                                                          towerTool = towersNoise,
-                                                          nEtaWindow = winEtaSeed, nPhiWindow = winPhiSeed,
-                                                          nEtaPosition = winEtaPos, nPhiPosition = winPhiPos,
-                                                          nEtaDuplicates = winEtaDup, nPhiDuplicates = winPhiDup,
-                                                          nEtaFinal = winEta, nPhiFinal = winPhi,
-                                                          energyThreshold = enThreshold,
-                                                          OutputLevel = INFO)
+                                                     towerTool = towersNoise,
+                                                     nEtaWindow = 7, nPhiWindow = 15,
+                                                     nEtaPosition = 3, nPhiPosition = 11,
+                                                     nEtaDuplicates = 5, nPhiDuplicates = 11,
+                                                     nEtaFinal = winEta, nPhiFinal = winPhi,
+                                                     energyThreshold = enThreshold)
     createclustersNoise.clusters.Path = "caloClustersNoise"
     from Configurables import CorrectCluster
     correctClusters = CorrectCluster("CorrectCluster",
@@ -243,9 +213,9 @@ towers.hcalFwdCells.Path = "HCalFwdCells"
 
 createclusters = CreateCaloClustersSlidingWindow("CreateCaloClusters",
                                                  towerTool = towers,
-                                                 nEtaWindow = winEtaSeed, nPhiWindow = winPhiSeed,
-                                                 nEtaPosition = winEtaPos, nPhiPosition = winPhiPos,
-                                                 nEtaDuplicates = winEtaDup, nPhiDuplicates = winPhiDup,
+                                                 nEtaWindow = 7, nPhiWindow = 15,
+                                                 nEtaPosition = 3, nPhiPosition = 11,
+                                                 nEtaDuplicates = 5, nPhiDuplicates = 11,
                                                  nEtaFinal = winEta, nPhiFinal = winPhi,
                                                  energyThreshold = enThreshold)
 createclusters.clusters.Path = "caloClusters"

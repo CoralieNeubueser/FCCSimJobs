@@ -506,7 +506,7 @@ if __name__=="__main__":
         if args.recSlidingWindow:
             common_fccsw_command += ' --winEta ' + str(args.winEta) + ' --winPhi ' + str(args.winPhi) + ' --enThreshold ' + str(args.enThreshold) + ' '
         if args.recTopoClusters:
-            common_fccsw_command += ' --sigma1 ' + str(args.sigma1) + ' --sigma2 ' + str(args.sigma2) + ' --sigma3 ' + str(args.sigma3) + ' '
+            common_fccsw_command += ' --sigma1 ' + str(args.sigma1) + ' --sigma2 ' + str(args.sigma2) + ' --sigma3 ' + str(args.sigma3) + '  --pileup ' + str(args.pileup)
         print '-------------------------------------'
         print common_fccsw_command
         print '-------------------------------------'

@@ -45,11 +45,16 @@ ecalEndcapReadoutName = "EMECPhiEtaReco"
 ecalFwdReadoutName = "EMFwdPhiEta"
 # HCAL readouts
 hcalBarrelReadoutName = "HCalBarrelReadout"
+hcalBarrelReadoutNamePhiEta = "BarHCal_Readout_phieta"
 hcalExtBarrelReadoutName = "HCalExtBarrelReadout"
+hcalExtBarrelReadoutNamePhiEta = "ExtBarHCal_Readout_phieta"
 hcalEndcapReadoutName = "HECPhiEtaReco"
 hcalFwdReadoutName = "HFwdPhiEta"
 # Tail Catcher readout
 tailCatcherReadoutName = "Muons_Readout"
+
+hcalCellCollection = "HCalBarrelCells"
+
 ##############################################################################################################
 #######                                        INPUT                                             #############
 ##############################################################################################################
@@ -190,6 +195,7 @@ positionsHcalBarrel = CreateCellPositions("positionsHcalBarrel",
                                           hits = "HCalBarrelCells", 
                                           positionedHits = "HCalBarrelCellPositions", 
                                           OutputLevel = INFO)
+
 if not simargs.flat:
     positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel", 
                                                  positionsTool=HCalExtBcells, 

@@ -84,7 +84,7 @@ rec_detid = r.std.vector(int)()
 
 outfile=r.TFile(outfile_name,"recreate")
 
-outtree=r.TTree('tree','tree') 
+outtree=r.TTree('events','Events') 
 
 maxEvent = intree.GetEntries()
 print 'Number of events : ',maxEvent

@@ -3,20 +3,26 @@ import sys
 import math
 import numpy as n
 import ROOT as r
-from ROOT import gSystem
-gSystem.Load("libCaloAnalysis")
-from ROOT import Decoder
 
-system_decoder = Decoder("system:4")
-ecalBarrel_decoder = Decoder("system:4,cryo:1,type:3,subtype:3,layer:8,eta:9,phi:10")
-hcalBarrel_decoder = Decoder("system:4,module:8,row:9,layer:5")
-hcalExtBarrel_decoder = Decoder("system:4,module:8,row:9,layer:5")
-ecalEndcap_decoder = Decoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:10,phi:10")
-hcalEndcap_decoder = Decoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:10,phi:10")
-ecalFwd_decoder = Decoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:11,phi:10")
-hcalFwd_decoder = Decoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:11,phi:10")
-trackerBarrel_decoder = Decoder("system:4,layer:5,module:18,x:-15,z:-15")
-trackerEndcap_decoder = Decoder("system:4,posneg:1,disc:5,component:17,x:-15,z:-15")
+from ROOT import gSystem
+import platform, os
+if platform.system()=='Darwin':
+    gSystem.Load(os.environ['/cvmfs/sft.cern.ch/lcg/releases/DD4hep/01-05-2396f/x86_64-slc6-gcc62-opt/lib/'])
+result=gSystem.Load("libDDCorePlugins")
+from ROOT import dd4hep
+if result < 0:
+    print "No lib loadable!"
+
+system_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4")
+ecalBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,cryo:1,type:3,subtype:3,layer:8,eta:9,phi:10")
+hcalBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,module:8,row:9,layer:5")
+hcalExtBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,module:8,row:9,layer:5")
+ecalEndcap_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:10,phi:10")
+hcalEndcap_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:10,phi:10")
+ecalFwd_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:11,phi:10")
+hcalFwd_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:11,phi:10")
+trackerBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,layer:5,module:18,x:-15,z:-15")
+trackerEndcap_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,posneg:1,disc:5,component:17,x:-15,z:-15")
 
 lastECalBarrelLayer = int(7)
 lastECalEndcapLayer = int(39)
@@ -30,9 +36,8 @@ lastOuterTrackerNegECapLayer = int(33)
 lastFwdTrackerPosECapLayer = int(42)
 
 def systemID(cellid):
-    system_decoder.setValue(cellid)
-    return system_decoder["system"]
-    
+    return system_decoder.get(cellid, "system")
+
 def benchmarkCorr(ecal, ecal_last, ehad, ehad_first):
     a=0.978
     b=0.479
@@ -69,14 +74,6 @@ cluster_x = r.std.vector(float)()
 cluster_y = r.std.vector(float)()
 cluster_z = r.std.vector(float)()
 
-cluster_eta = r.std.vector(float)()
-cluster_phi = r.std.vector(float)()
-cluster_pt  = r.std.vector(float)()
-cluster_ene = r.std.vector(float)()
-cluster_x = r.std.vector(float)()
-cluster_y = r.std.vector(float)()
-cluster_z = r.std.vector(float)()
-
 rec_eta = r.std.vector(float)()
 rec_phi = r.std.vector(float)()
 rec_pt  = r.std.vector(float)()
@@ -89,8 +86,6 @@ rec_detid = r.std.vector(int)()
 rec_bits = r.std.vector(float)()
 
 outfile=r.TFile(outfile_name,"recreate")
-#outfile.mkdir('ana')
-#r.gDirectory.cd('ana')
 outtree=r.TTree('events','Events')
 
 maxEvent = intree.GetEntries()
@@ -186,53 +181,72 @@ for event in intree:
             cluster_y.push_back(c.core.position.y/10.)
             cluster_z.push_back(c.core.position.z/10.)
 
+    elif event.GetBranchStatus("caloClusters"):
+        for c in event.caloClusters:
+            position = r.TVector3(c.core.position.x,c.core.position.y,c.core.position.z)
+            cluster_ene.push_back(c.core.energy)
+            cluster_eta.push_back(position.Eta())
+            cluster_phi.push_back(position.Phi())
+            cluster_pt.push_back(c.core.energy*position.Unit().Perp())
+            cluster_x.push_back(c.core.position.x/10.)
+            cluster_y.push_back(c.core.position.y/10.)
+            cluster_z.push_back(c.core.position.z/10.)
+
+    elif event.GetBranchStatus("caloClustersNoise"):
+        for c in event.caloClustersNoise:
+            position = r.TVector3(c.core.position.x,c.core.position.y,c.core.position.z)
+            cluster_ene.push_back(c.core.energy)
+            cluster_eta.push_back(position.Eta())
+            cluster_phi.push_back(position.Phi())
+            cluster_pt.push_back(c.core.energy*position.Unit().Perp())
+            cluster_x.push_back(c.core.position.x/10.)
+            cluster_y.push_back(c.core.position.y/10.)
+            cluster_z.push_back(c.core.position.z/10.)
+
     else:
         for c in event.HCalBarrelCellPositions:
-            hcalBarrel_decoder.setValue(c.core.cellId)
             position = r.TVector3(c.position.x,c.position.y,c.position.z)
             rec_ene.push_back(c.core.energy)
             rec_eta.push_back(position.Eta())
             rec_phi.push_back(position.Phi())
             rec_pt.push_back(c.core.energy*position.Unit().Perp())
-            rec_layer.push_back(hcalBarrel_decoder["layer"] + lastECalBarrelLayer + 1)
+            rec_layer.push_back(hcalBarrel_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
             rec_x.push_back(c.position.x/10.)
             rec_y.push_back(c.position.y/10.)
             rec_z.push_back(c.position.z/10.)
             rec_detid.push_back(systemID(c.core.cellId))
             rec_bits.push_back(c.core.bits)
-            if hcalBarrel_decoder["layer"] == 0:
+            if hcalBarrel_decoder.get(c.core.cellId, "layer") == 0:
                 EhadFirst += c.core.energy
             E += c.core.energy
             Ehad += c.core.energy
             numHits += 1
     
         for c in event.ECalBarrelCellPositions:
-            ecalBarrel_decoder.setValue(c.core.cellId)
             position = r.TVector3(c.position.x,c.position.y,c.position.z)
             rec_ene.push_back(c.core.energy)
             rec_eta.push_back(position.Eta())
             rec_phi.push_back(position.Phi())
             rec_pt.push_back(c.core.energy*position.Unit().Perp())
-            rec_layer.push_back(ecalBarrel_decoder["layer"])
+            rec_layer.push_back(ecalBarrel_decoder.get(c.core.cellId, "layer"))
             rec_x.push_back(c.position.x/10.)
             rec_y.push_back(c.position.y/10.)
             rec_z.push_back(c.position.z/10.)
             rec_detid.push_back(systemID(c.core.cellId))
             rec_bits.push_back(c.core.bits)
-            if ecalBarrel_decoder["layer"] == lastECalBarrelLayer:
+            if ecalBarrel_decoder.get(c.core.cellId, "layer") == lastECalBarrelLayer:
                 EemLast += c.core.energy
             E += c.core.energy
             Eem += c.core.energy
             numHits += 1
 
         for c in event.HCalExtBarrelCellPositions:
-            hcalExtBarrel_decoder.setValue(c.core.cellId)
             position = r.TVector3(c.position.x,c.position.y,c.position.z)
             rec_ene.push_back(c.core.energy)
             rec_eta.push_back(position.Eta())
             rec_phi.push_back(position.Phi())
             rec_pt.push_back(c.core.energy*position.Unit().Perp())
-            rec_layer.push_back(hcalExtBarrel_decoder["layer"] + lastECalBarrelLayer + 1)
+            rec_layer.push_back(hcalExtBarrel_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
             rec_x.push_back(c.position.x/10.)
             rec_y.push_back(c.position.y/10.)
             rec_z.push_back(c.position.z/10.)
@@ -242,13 +256,12 @@ for event in intree:
             numHits += 1
             
         for c in event.ECalEndcapCellPositions:
-            ecalEndcap_decoder.setValue(c.core.cellId)
             position = r.TVector3(c.position.x,c.position.y,c.position.z)
             rec_ene.push_back(c.core.energy)
             rec_eta.push_back(position.Eta())
             rec_phi.push_back(position.Phi())
             rec_pt.push_back(c.core.energy*position.Unit().Perp())
-            rec_layer.push_back(ecalEndcap_decoder["layer"])
+            rec_layer.push_back(ecalEndcap_decoder.get(c.core.cellId, "layer"))
             rec_x.push_back(c.position.x/10.)
             rec_y.push_back(c.position.y/10.)
             rec_z.push_back(c.position.z/10.)
@@ -258,13 +271,12 @@ for event in intree:
             numHits += 1
 
         for c in event.HCalEndcapCellPositions:
-            hcalEndcap_decoder.setValue(c.core.cellId)
             position = r.TVector3(c.position.x,c.position.y,c.position.z)
             rec_ene.push_back(c.core.energy)
             rec_eta.push_back(position.Eta())
             rec_phi.push_back(position.Phi())
             rec_pt.push_back(c.core.energy*position.Unit().Perp())
-            rec_layer.push_back(hcalEndcap_decoder["layer"] + lastECalEndcapLayer + 1)
+            rec_layer.push_back(hcalEndcap_decoder.get(c.core.cellId, "layer") + lastECalEndcapLayer + 1)
             rec_x.push_back(c.position.x/10.)
             rec_y.push_back(c.position.y/10.)
             rec_z.push_back(c.position.z/10.)
@@ -274,13 +286,12 @@ for event in intree:
             numHits += 1
 
         for c in event.ECalFwdCellPositions:
-            ecalFwd_decoder.setValue(c.core.cellId)
             position = r.TVector3(c.position.x,c.position.y,c.position.z)
             rec_ene.push_back(c.core.energy)
             rec_eta.push_back(position.Eta())
             rec_phi.push_back(position.Phi())
             rec_pt.push_back(c.core.energy*position.Unit().Perp())
-            rec_layer.push_back(ecalFwd_decoder["layer"])
+            rec_layer.push_back(ecalFwd_decoder.get(c.core.cellId, "layer"))
             rec_x.push_back(c.position.x/10.)
             rec_y.push_back(c.position.y/10.)
             rec_z.push_back(c.position.z/10.)
@@ -290,13 +301,12 @@ for event in intree:
             numHits += 1
 
         for c in event.HCalFwdCellPositions:
-            hcalFwd_decoder.setValue(c.core.cellId)
             position = r.TVector3(c.position.x,c.position.y,c.position.z)
             rec_ene.push_back(c.core.energy)
             rec_eta.push_back(position.Eta())
             rec_phi.push_back(position.Phi())
             rec_pt.push_back(c.core.energy*position.Unit().Perp())
-            rec_layer.push_back(hcalFwd_decoder["layer"] + lastECalFwdLayer + 1)
+            rec_layer.push_back(hcalFwd_decoder.get(c.core.cellId, "layer") + lastECalFwdLayer + 1)
             rec_x.push_back(c.position.x/10.)
             rec_y.push_back(c.position.y/10.)
             rec_z.push_back(c.position.z/10.)
@@ -305,44 +315,43 @@ for event in intree:
             E += c.core.energy
             numHits += 1
 
-        for c in event.TrackerPositionedHits:
-            trackerBarrel_decoder.setValue(c.core.cellId)
-            trackerEndcap_decoder.setValue(c.core.cellId)
-            position = r.TVector3(c.position.x,c.position.y,c.position.z)
-            rec_ene.push_back(c.core.energy)
-            rec_eta.push_back(position.Eta())
-            rec_phi.push_back(position.Phi())
-            rec_pt.push_back(c.core.energy*position.Unit().Perp())
-            sysID = systemID(c.core.cellId)
-            if  sysID == 0 :
-                rec_layer.push_back(trackerBarrel_decoder["layer"])
-            elif sysID == 1 :
-                rec_layer.push_back(trackerBarrel_decoder["layer"] + lastInnerTrackerBarrelLayer + 1)
-            elif sysID == 2 :
-                posneg = trackerEndcap_decoder["posneg"]
-                if posneg == 0 :
-                    rec_layer.push_back(trackerEndcap_decoder["disc"] + lastOuterTrackerBarrelLayer + 1)
+        if event.GetBranchStatus("TrackerPositionedHits"):
+            for c in event.TrackerPositionedHits:
+                position = r.TVector3(c.position.x,c.position.y,c.position.z)
+                rec_ene.push_back(c.core.energy)
+                rec_eta.push_back(position.Eta())
+                rec_phi.push_back(position.Phi())
+                rec_pt.push_back(c.core.energy*position.Unit().Perp())
+                sysID = systemID(c.core.cellId)
+                if  sysID == 0 :
+                    rec_layer.push_back(trackerBarrel_decoder.get(c.core.cellId, "layer"))
+                elif sysID == 1 :
+                    rec_layer.push_back(trackerBarrel_decoder.get(c.core.cellId, "layer") + lastInnerTrackerBarrelLayer + 1)
+                elif sysID == 2 :
+                    posneg = trackerEndcap_decoder.get(c.core.cellId, "posneg")
+                    if posneg == 0 :
+                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastOuterTrackerBarrelLayer + 1)
+                    else :
+                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastInnerTrackerPosECapLayer + 1)
+                elif sysID == 3:
+                    posneg = trackerEndcap_decoder.get(c.core.cellId, "posneg")
+                    if posneg == 0 :
+                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastInnerTrackerNegECapLayer + 1)
+                    else :
+                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastOuterTrackerPosECapLayer + 1)
                 else :
-                    rec_layer.push_back(trackerEndcap_decoder["disc"] + lastInnerTrackerPosECapLayer + 1)
-            elif sysID == 3:
-                posneg = trackerEndcap_decoder["posneg"]
-                if posneg == 0 :
-                    rec_layer.push_back(trackerEndcap_decoder["disc"] + lastInnerTrackerNegECapLayer + 1)
-                else :
-                    rec_layer.push_back(trackerEndcap_decoder["disc"] + lastOuterTrackerPosECapLayer + 1)
-            else :
-                posneg = trackerEndcap_decoder["posneg"]
-                if posneg == 0 :
-                    rec_layer.push_back(trackerEndcap_decoder["disc"] + lastOuterTrackerNegECapLayer + 1)
-                else :
-                    rec_layer.push_back(trackerEndcap_decoder["disc"] + lastFwdTrackerPosECapLayer + 1)
-            rec_x.push_back(c.position.x/10.)
-            rec_y.push_back(c.position.y/10.)
-            rec_z.push_back(c.position.z/10.)
-            rec_detid.push_back(systemID(c.core.cellId))
-            rec_bits.push_back(c.core.bits)
-            E += c.core.energy
-            numHits += 1
+                    posneg = trackerEndcap_decoder.get(c.core.cellId, "posneg")
+                    if posneg == 0 :
+                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastOuterTrackerNegECapLayer + 1)
+                    else :
+                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastFwdTrackerPosECapLayer + 1)
+                rec_x.push_back(c.position.x/10.)
+                rec_y.push_back(c.position.y/10.)
+                rec_z.push_back(c.position.z/10.)
+                rec_detid.push_back(systemID(c.core.cellId))
+                rec_bits.push_back(c.core.bits)
+                E += c.core.energy
+                numHits += 1
 
     ev_ebench[0] = benchmarkCorr(Eem,EemLast,Ehad,EhadFirst)
     ev_e[0] = E

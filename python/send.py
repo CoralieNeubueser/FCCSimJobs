@@ -139,6 +139,14 @@ def getJobInfo(argv):
           short_job_type = "sim"
         return default_options,job_type,short_job_type,True
 
+    elif '--hcalOnly' in argv:
+        default_options = 'config/geantSim_hcalOnly.py'
+        if '--fullSteel' in argv:
+            default_options = 'config/geantSim_hcalOnly_steel.py'
+        job_type = "simu"
+        short_job_type = "sim"
+        return default_options,job_type,short_job_type,True
+
     else:
         default_options = 'config/geantSim.py'
         job_type = "simu"
@@ -183,11 +191,13 @@ if __name__=="__main__":
     jobTypeGroup.add_argument('--addPileupToSignal', action="store_true", help='Add PU events to signal.')
     jobTypeGroup.add_argument("--ntuple", action='store_true', help="Conversion to ntuple")
     jobTypeGroup.add_argument("--trackerPerformance", action='store_true', help="Tracker-only performance studies")
+    jobTypeGroup.add_argument("--hcalOnly", action='store_true', help="simulate HCal only (no material in front)")
     # Add noise on cluster level
     parser.add_argument("--noise", action='store_true', help="Add electronics noise")
     parser.add_argument("--addPileupNoise", action='store_true', help="Add pile-up noise in qudrature to electronics noise")
     parser.add_argument('--pileup', type=int,  required = '--mergePileup' in sys.argv or '--addPileupNoise' in sys.argv or '--addPileupToSignal' in sys.argv, help='Pileup')
     parser.add_argument("--tripletTracker", action="store_true", help="Use triplet tracker layout instead of baseline")
+    parser.add_argument("--fullSteel", action='store_true', help="Use HCal simulation with full steel absorbers.")
 
     default_options,job_type,short_job_type,sim = getJobInfo(sys.argv)
     parser.add_argument('--jobOptions', type=str, default = default_options, help='Name of the job options run by FCCSW (default config/geantSim.py')
@@ -257,6 +267,10 @@ if __name__=="__main__":
         print 'path_to_FCCSW: ',path_to_FCCSW
 
     version = args.version
+    if args.hcalOnly:
+        version = "v03_hcalOnly"
+        if args.fullSteel:
+            version = "v03_hcalOnly_fullSteel"
 
     print 'FCCSim version: ',version
     magnetic_field = not args.bFieldOff
@@ -363,6 +377,8 @@ if __name__=="__main__":
         warning("Please note that '--recPositions' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
     if args.recTopoClusters and not args.local == "inits/reco.py":
         warning("Please note that '--recTopoClusters' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
+    if args.fullSteel and not args.local == "inits/reco.py":
+        warning("Please note that '--fullSteel' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
 
     # first make sure the output path for root files exists
     outdir = os.path.join( output_path, version, job_dir, job_type)

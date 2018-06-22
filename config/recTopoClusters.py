@@ -174,7 +174,7 @@ readNeighboursMap = TopoCaloNeighbours("ReadNeighboursMap",
 #######                          NOISE/NO NOISE TOOL FOR CLUSTER THRESHOLDS                      #############
 ##############################################################################################################
 
-if elNoise:
+if elNoise and not puNoise:
     inputNoisePerCell = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_segHcal_electronicsNoiseLevel.root"
     # Apply cell thresholds for electronics noise only if no pileup events have been merged
     if addedPU != 0:

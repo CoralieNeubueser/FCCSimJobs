@@ -110,9 +110,6 @@ hcalFieldValues=[8]
 inputCellCollectionECalBarrel = "ECalBarrelCells"
 inputCellCollectionHCalBarrel = "HCalBarrelCells"
 inputNoisePerCell = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_segHcal_constNoiseLevel.root"
-if addedPU != 0:
-    inputCellCollectionECalBarrel = "addedPUECalBarrelCells"
-    inputCellCollectionHCalBarrel ="addedPUHCalBarrelCells"
 
 ##############################################################################################################
 #######                                        INPUT                                             #############

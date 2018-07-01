@@ -516,8 +516,11 @@ if __name__=="__main__":
             common_fccsw_command += ' --detectorPath ' + path_to_FCCSW
         if args.physics and args.mergePileup:
             common_fccsw_command += ' --pileup ' + str(args.pileup)            
-        if args.recPositions and args.pileup:
-            common_fccsw_command += ' --prefixCollections merged '
+        if args.recPositions:
+            if args.hcalOnly:
+                common_fccsw_command += ' --hcalOnly '
+            if args.pileup:
+                common_fccsw_command += ' --prefixCollections merged '
         if args.recSlidingWindow:
             common_fccsw_command += ' --winEta ' + str(args.winEta) + ' --winPhi ' + str(args.winPhi) + ' --enThreshold ' + str(args.enThreshold) + ' '
         if args.recTopoClusters:

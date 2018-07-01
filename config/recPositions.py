@@ -6,6 +6,7 @@ simparser.add_argument('--outName', type=str, help='Name of the output file', re
 simparser.add_argument('-N','--numEvents',  type=int, help='Number of simulation events to run', required=True)
 simparser.add_argument('--prefixCollections', type=str, help='Prefix added to the collection names', default="")
 simparser.add_argument("--addMuons", action='store_true', help="Add tail catcher cells", default = False)
+simparser.add_argument("--hcalOnly", action='store_true', help="Convert only HCal cells", default = False)
 
 simargs, _ = simparser.parse_known_args()
 
@@ -17,6 +18,7 @@ input_name = simargs.inName
 output_name = simargs.outName
 prefix = simargs.prefixCollections
 addMuons = simargs.addMuons
+hcalOnly = simargs.hcalOnly
 print "number of events = ", num_events
 print "input name: ", input_name
 print "output name: ", output_name
@@ -62,6 +64,9 @@ podioevent = FCCDataSvc("EventDataSvc", input=input_name)
 coll_names_read = [prefix+"ECalBarrelCells", prefix+"HCalBarrelCells", prefix+"HCalExtBarrelCells", prefix+"ECalEndcapCells", prefix+"HCalEndcapCells", prefix+"ECalFwdCells", prefix+"HCalFwdCells", prefix+"GenParticles", prefix+"GenVertices"]
 if addMuons:
     coll_names_read += ["TailCatcherCells"]
+if hcalOnly:
+    coll_names_read = [prefix+"TailCatcherCells", prefix+"HCalBarrelCells", prefix+"HCalExtBarrelCells", prefix+"GenParticles", prefix+"GenVertices"]
+
 podioinput = PodioInput("PodioReader", collections = coll_names_read, OutputLevel = DEBUG)
 
 ##############################################################################################################
@@ -122,7 +127,7 @@ HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC",
 HCalFwdcells = CellPositionsCaloDiscsTool("CellPositionsHCalFwd",
                                         readoutName = hcalFwdReadoutName,
                                         OutputLevel = INFO)
-if addMuons:
+if addMuons or hcalOnly:
     from Configurables import CellPositionsTailCatcherTool
     TailCatchercells = CellPositionsTailCatcherTool("CellPositionsTailCatcher",
                                                     readoutName = tailCatcherReadoutName,
@@ -166,7 +171,7 @@ positionsHcalFwd = CreateCellPositions("positionsHcalFwd",
                                           hits = prefix+"HCalFwdCells",
                                           positionedHits = "HCalFwdCellPositions",
                                           OutputLevel = INFO)
-if addMuons:
+if addMuons or hcalOnly:
     positionsTailCatcher = CreateCellPositions("positionsTailCatcher",
                                                positionsTool=TailCatchercells,
                                                hits = "TailCatcherCells",
@@ -197,16 +202,20 @@ if addMuons:
     positionsTailCatcher.AuditExecute = True
 out.AuditExecute = True
 
-list_of_algorithms = [podioinput,
-                      rewriteECalEC,
-                      rewriteHCalEC,
-                      positionsEcalBarrel,
-                      positionsEcalEndcap,
-                      positionsEcalFwd,
-                      positionsHcalBarrel,
-                      positionsHcalExtBarrel,
-                      positionsHcalEndcap,
-                      positionsHcalFwd]
+list_of_algorithms = [podioinput]
+
+if hcalOnly:
+    list_of_algorithms += [positionsHcalBarrel, positionsHcalExtBarrel, positionsTailCatcher]
+else:
+    list_of_algorithms += [rewriteECalEC,
+                           rewriteHCalEC,
+                           positionsEcalBarrel,
+                           positionsEcalEndcap,
+                           positionsEcalFwd,
+                           positionsHcalBarrel,
+                           positionsHcalExtBarrel,
+                           positionsHcalEndcap,
+                           positionsHcalFwd]
 if addMuons:
     list_of_algorithms += [positionsTailCatcher]
 list_of_algorithms += [out]

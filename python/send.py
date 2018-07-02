@@ -588,7 +588,7 @@ if __name__=="__main__":
                 os.system("mkdir -p %s"%(ntup_path))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/clusters.root %s/%s\n'%(ntup_path, outfile))
             if args.calibrate:
-                ana_path = ntup_path.replace('/ntup/', '/ana/')
+                ana_path = ntup_path.replace('/ntup', '/ana')
                 if not ut.dir_exist(ana_path):
                     os.system("mkdir -p %s"%(ana_path))
                 frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s\n'%( ana_path+'/'+outfile ))

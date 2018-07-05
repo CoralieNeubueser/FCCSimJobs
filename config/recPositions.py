@@ -61,7 +61,9 @@ tailCatcherReadoutName = "Muons_Readout"
 from Configurables import ApplicationMgr, FCCDataSvc, PodioInput, PodioOutput
 podioevent = FCCDataSvc("EventDataSvc", input=input_name)
 
-coll_names_read = [prefix+"ECalBarrelCells", prefix+"HCalBarrelCells", prefix+"HCalExtBarrelCells", prefix+"ECalEndcapCells", prefix+"HCalEndcapCells", prefix+"ECalFwdCells", prefix+"HCalFwdCells", prefix+"GenParticles", prefix+"GenVertices"]
+coll_names_read = [prefix+"ECalBarrelCells", prefix+"HCalBarrelCells", prefix+"HCalExtBarrelCells", prefix+"ECalEndcapCells", prefix+"HCalEndcapCells", prefix+"ECalFwdCells", prefix+"HCalFwdCells"]
+if not prefix:
+    coll_names_read += ["GenParticles", "GenVertices"]
 if addMuons:
     coll_names_read += ["TailCatcherCells"]
 if hcalOnly:
@@ -82,7 +84,7 @@ rewriteECalEC = RewriteBitfield("RewriteECalEC",
                                 # new bitfield (readout), with new segmentation
                                 newReadoutName = ecalEndcapReadoutName,
                                 debugPrint = 10,
-                                OutputLevel = DEBUG)
+                                OutputLevel= INFO)
 # clusters are needed, with deposit position and cellID in bits
 rewriteECalEC.inhits.Path = prefix+"ECalEndcapCells"
 rewriteECalEC.outhits.Path = "newECalEndcapCells"
@@ -95,7 +97,7 @@ rewriteHCalEC = RewriteBitfield("RewriteHCalEC",
                                 # new bitfield (readout), with new segmentation
                                 newReadoutName = hcalEndcapReadoutName,
                                 debugPrint = 10,
-                                OutputLevel = DEBUG)
+                                OutputLevel = INFO)
 # clusters are needed, with deposit position and cellID in bits
 rewriteHCalEC.inhits.Path = prefix+"HCalEndcapCells"
 rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
@@ -111,7 +113,7 @@ ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel",
                                     OutputLevel = INFO)
 EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC",
                                     readoutName = ecalEndcapReadoutName,
-                                    OutputLevel = DEBUG)
+                                    OutputLevel = INFO)
 ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd",
                                         readoutName = ecalFwdReadoutName,
                                         OutputLevel = INFO)

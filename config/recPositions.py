@@ -62,7 +62,13 @@ hcalCellCollection = "HCalBarrelCells"
 from Configurables import ApplicationMgr, FCCDataSvc, PodioInput, PodioOutput
 podioevent = FCCDataSvc("EventDataSvc", input=input_name)
 
-podioinput = PodioInput("PodioReader", collections = ["ECalBarrelCells", "HCalBarrelCells", "HCalExtBarrelCells", "ECalEndcapCells", "HCalEndcapCells", "ECalFwdCells", "HCalFwdCells", "TailCatcherCells","GenParticles","GenVertices"], OutputLevel = DEBUG)
+inputCollections = ["ECalBarrelCells", "HCalBarrelCells", "HCalExtBarrelCells", "ECalEn\
+dcapCells", "HCalEndcapCells", "ECalFwdCells", "HCalFwdCells", "TailCatcherCells","GenParticles","GenVertices"]
+
+if simargs.flat:
+    inputCollections = ["ECalBarrelCells", "HCalBarrelCells"]
+
+podioinput = PodioInput("PodioReader", collections = inputCollections, OutputLevel = DEBUG)
 
 ##############################################################################################################                                                                                                                                
 #######                                       RECALIBRATE ECAL                                   #############                                                                                                                                

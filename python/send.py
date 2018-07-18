@@ -78,6 +78,8 @@ def getJobInfo(argv):
         default_options = 'config/recPositions.py'
         job_type = "ntup/positions"
         short_job_type = "recPos"
+        if '--resegmentHCal' in argv:
+            job_type = "ntup/resegmentedHCal/positions"
         return default_options,job_type,short_job_type,False
 
     elif '--recSlidingWindow' in argv:
@@ -222,6 +224,9 @@ if __name__=="__main__":
                               required = ('ljets' in sys.argv or 'top' in sys.argv or 'Wqq' in sys.argv
                                           or 'Zqq' in sys.argv or 'Hbb' in sys.argv),
                               help='Transverse momentum of simulated jets (valid only for Hbb, Wqq, Zqq, t, ljet)')
+
+    recoPositionsGroup = parser.add_argument_group('RecoPositions','Cell positions reconstruction')
+    recoPositionsGroup.add_argument('--resegmentHCal', action='store_true', help="Resegment HCal cells to deltaEta = 0.025")
 
     recoSlidingWinGroup = parser.add_argument_group('RecoSlidingWindow','Sliding window reconstruction')
     recoSlidingWinGroup.add_argument('--winEta', type=int, default=7, help='Size of the final cluster in eta')

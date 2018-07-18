@@ -119,7 +119,7 @@ def getJobInfo(argv):
         else:
             job_type = "reco/topoClusters/noNoise"
         if '--calibrate' in argv:
-            job_type += "/calibrated/"
+            job_type += "/calibrated/optimalChi2/"
         short_job_type = 'recTopo'
         return default_options,job_type,short_job_type,False
 
@@ -292,11 +292,12 @@ if __name__=="__main__":
     elif args.addPileupToSignal: # merge cells from simulated events
         job_type = "simuPU"+str(args.pileup)
         short_job_type += "PU"+str(args.pileup)
-    elif (args.recPositions or args.recTopoClusters or args.recSlidingWindow) and args.pileup: # if reconstruction is run on pileup (mixed) events
-        job_type = job_type.replace("ntup", "ntupPU"+str(args.pileup)).replace("reco", "recoPU"+str(args.pileup))
-        short_job_type += "PU"+str(args.pileup)
     elif args.pileup:
         warning("'--pileup "+str(args.pileup)+"' is specified but no usecase was found. Please remove it or update job sending script.")
+    if (args.recPositions or args.recTopoClusters or args.recSlidingWindow) and args.pileup: # if reconstruction is run on pileup (mixed) events
+        job_type = job_type.replace("ntup", "ntupPU"+str(args.pileup)).replace("reco", "recoPU"+str(args.pileup))
+        short_job_type += "PU"+str(args.pileup)
+    
     if args.recSlidingWindow:
         job_type += '/eta' + str(args.winEta) + 'phi' + str(args.winPhi) + 'en' + str(args.enThreshold) + '/'
         short_job_type += '_eta' + str(args.winEta) + 'phi' + str(args.winPhi) + 'en' + str(args.enThreshold)
@@ -527,6 +528,11 @@ if __name__=="__main__":
             common_fccsw_command += ' --sigma1 ' + str(args.sigma1) + ' --sigma2 ' + str(args.sigma2) + ' --sigma3 ' + str(args.sigma3) + ' '
             if args.pileup:
                 common_fccsw_command +=  '--addElectronicsNoise --pileup ' + str(args.pileup)
+                if process=='MinBias':
+                    common_fccsw_command += ' --prefixCollections merged '
+                else:
+                    common_fccsw_command += ' --prefixCollections addedPU'
+                    
         print '-------------------------------------'
         print common_fccsw_command
         print '-------------------------------------'
@@ -582,13 +588,14 @@ if __name__=="__main__":
             frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
         elif args.recTopoClusters or args.recSlidingWindow:
+            frun.write('ls %s \n'%(outdir))
             frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters.root\n'%(current_dir,outfile))
             ntup_path = outdir.replace('/reco', '/ntup')
             if not ut.dir_exist(ntup_path):
                 os.system("mkdir -p %s"%(ntup_path))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/clusters.root %s/%s\n'%(ntup_path, outfile))
             if args.calibrate:
-                ana_path = ntup_path.replace('/ntup', '/ana')
+                ana_path = ntup_path.replace('/ntup', '/ana/')
                 if not ut.dir_exist(ana_path):
                     os.system("mkdir -p %s"%(ana_path))
                 frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s\n'%( ana_path+'/'+outfile ))

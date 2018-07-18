@@ -13,6 +13,7 @@ simparser.add_argument('--sigma3', type=int, default=0, help='Energy threshold [
 simparser.add_argument('--detectorPath', type=str, help='Path to detectors', default = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj")
 simparser.add_argument("--calibrate", action='store_true', help="Calibrate clusters (default: false)")
 simparser.add_argument("--pileup", type=int, help="Added pileup events to signal", default=0)
+simparser.add_argument('--prefixCollections', type=str, help='Prefix added to the collection names', default="")
 
 simargs, _ = simparser.parse_known_args()
 
@@ -31,6 +32,7 @@ sigma3 = simargs.sigma3
 path_to_detector = simargs.detectorPath
 calib = simargs.calibrate
 addedPU = 0
+prefix = simargs.prefixCollections
 
 print "number of events = ", num_events
 print "input name: ", input_name
@@ -43,6 +45,17 @@ print "calibrate clusters: ", calib
 benchmark_a = 1.07
 benchmark_b = 0.76
 benchmark_c = -1.9E-5
+# from minimisation (bFieldOn, C=0): 0.975799,-2.54738e-06,0.822663,-0.140975,-2.18657e-05,-0.0193682
+a1 = 0.975799
+a2 = -2.54738e-06
+a3 = 0.822663
+b1 = -0.140975
+b2 = -2.18657e-05
+b3 = -0.0193682
+c1 = 0
+c2 = 0
+c3 = 1
+
 fractionECal = 0.9
 
 print "added pileup events : ", addedPU
@@ -107,8 +120,12 @@ hcalFieldNames=["system"]
 hcalFieldValues=[8]
 
 # inputs for topo-clustering
-inputCellCollectionECalBarrel = "ECalBarrelCells"
-inputCellCollectionHCalBarrel = "HCalBarrelCells"
+inputCellCollectionECalBarrel = prefix+"ECalBarrelCells"
+inputCellCollectionHCalBarrel = prefix+"HCalBarrelCells"
+inputCollections = [inputCellCollectionECalBarrel,  inputCellCollectionHCalBarrel]
+if not prefix=="merged":
+    inputCollections += ["GenParticles", "GenVertices"]
+
 inputNoisePerCell = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_segHcal_constNoiseLevel.root"
 
 ##############################################################################################################
@@ -119,11 +136,7 @@ inputNoisePerCell = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_seg
 from Configurables import ApplicationMgr, FCCDataSvc, PodioInput, PodioOutput
 podioevent = FCCDataSvc("EventDataSvc", input=input_name)
 
-if addedPU != 0:
-    inputCellCollectionECalBarrel = "addedPUECalBarrelCells"   
-    inputCellCollectionHCalBarrel = "addedPUHCalBarrelCells"
-    
-podioinput = PodioInput("PodioReader", collections = [inputCellCollectionECalBarrel, inputCellCollectionHCalBarrel, "GenParticles", "GenVertices"], OutputLevel = DEBUG)
+podioinput = PodioInput("PodioReader", collections = inputCollections, OutputLevel = DEBUG)
 
 ##############################################################################################################
 #######                                       CELL POSITIONS  TOOLS                              #############
@@ -176,6 +189,8 @@ if elNoise and not puNoise:
     # Apply cell thresholds for electronics noise only if no pileup events have been merged
     if addedPU != 0:
         inputNoisePerCell = "/afs/cern.ch/work/c/cneubuse/public/FCChh/inBfield/cellNoise_map_forPU"+str(addedPU)+"_electronicsPileup.root"
+    
+    print inputNoisePerCell
         
     from Configurables import CreateCaloCells, NoiseCaloCellsFromFileTool, TubeLayerPhiEtaCaloTool, CalibrateCaloHitsTool, NoiseCaloCellsFlatTool, NestedVolumesCaloTool
     # ECal Barrel noise
@@ -291,8 +306,16 @@ if elNoise and not puNoise:
                                                     eDepCryoCorrection = True,
                                                     ehECal = 1.,
                                                     ehHCal = 1.1,
-                                                    fractionECal = fractionECal,
-                                                    OutputLevel = DEBUG)
+                                                    a1 = a1,
+                                                    a2 = a2,
+                                                    a3 = a3,
+                                                    b1 = b1,
+                                                    b2 = b2,
+                                                    b3 = b3,
+                                                    c1 = c1,
+                                                    c2 = c2,
+                                                    c3 = c3,
+                                                    fractionECal = fractionECal)
 
         THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]
         THistSvc().PrintAll=True
@@ -415,8 +438,16 @@ if puNoise:
                                                     eDepCryoCorrection = True,
                                                     ehECal = 1.,
                                                     ehHCal = 1.1,
-                                                    fractionECal = fractionECal,
-                                                    OutputLevel = DEBUG)
+                                                    a1 = a1,
+                                                    a2 = a2,
+                                                    a3 = a3,
+                                                    b1 = b1,
+                                                    b2 = b2,
+                                                    b3 = b3,
+                                                    c1 = c1,
+                                                    c2 = c2,
+                                                    c3 = c3,
+                                                    fractionECal = fractionECal)
 
         THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]
         THistSvc().PrintAll=True
@@ -504,8 +535,16 @@ if (calib) :
                                            eDepCryoCorrection = True,
                                            ehECal = 1.,
                                            ehHCal = 1.1,
-                                           fractionECal = fractionECal,
-                                           OutputLevel = DEBUG)
+                                           a1 = a1,
+                                           a2 = a2,
+                                           a3 = a3,
+                                           b1 = b1,
+                                           b2 = b2,
+                                           b3 = b3,
+                                           c1 = c1,
+                                           c2 = c2,
+                                           c3 = c3,
+                                           fractionECal = fractionECal)
 
     THistSvc().Output = ["rec DATAFILE='calibrateCluster_histograms.root' TYP='ROOT' OPT='RECREATE'"]
     THistSvc().PrintAll=True
@@ -532,12 +571,14 @@ positionsClusterBarrel = CreateCaloCellPositions("positionsClusterBarrel",
 
 # PODIO algorithm
 out = PodioOutput("out", OutputLevel=DEBUG)
-out.outputCommands = ["drop *", "keep GenParticles", "keep GenVertices", "keep TrackerPositionedHits", "keep caloClustersBarrel", "keep caloClusterBarrelCells", "keep caloClusterBarrelCellPositions", "keep calibCaloClusterBarrelCells"]
+out.outputCommands = ["drop *", "keep GenParticles", "keep GenVertices", "keep caloClustersBarrel", "keep caloClusterBarrelCells", "keep caloClusterBarrelCellPositions", "keep calibCaloClusterBarrelCells"]
 out.filename = output_name
 
 if elNoise or puNoise:
-    out.outputCommands += ["keep ECalBarrelCellsNoise", "keep HCalBarrelCellsNoise", "keep caloClustersBarrelNoise","keep caloClusterBarrelNoiseCells",  "keep caloClusterBarrelCellPositions", "keep calibCaloClustersBarrelNoise"]
-out.filename = output_name
+    if calib:
+        out.outputCommands += ["keep ECalBarrelCellsNoise", "keep HCalBarrelCellsNoise", "keep caloClusterBarrelCellPositions", "keep calibCaloClustersBarrelNoise"]
+    else:
+        out.outputCommands += ["keep ECalBarrelCellsNoise", "keep HCalBarrelCellsNoise", "keep caloClustersBarrelNoise", "keep caloClusterBarrelNoiseCells", "keep caloClusterBarrelCellPositions"]
 
 #CPU information
 from Configurables import AuditorSvc, ChronoAuditor
@@ -567,6 +608,6 @@ ApplicationMgr(
     TopAlg = list_of_algorithms,
     EvtSel = 'NONE',
     EvtMax   = num_events,
-    ExtSvc = [geoservice, podioevent, audsvc],
+    ExtSvc = [geoservice, podioevent],
     OutputLevel = INFO
 )

@@ -80,6 +80,7 @@ def getJobInfo(argv):
         short_job_type = "recPos"
         if '--resegmentHCal' in argv:
             job_type = "ntup/resegmentedHCal/positions"
+            short_job_type += "_resegmHCal"
         return default_options,job_type,short_job_type,False
 
     elif '--recSlidingWindow' in argv:
@@ -121,7 +122,7 @@ def getJobInfo(argv):
         else:
             job_type = "reco/topoClusters/noNoise"
         if '--calibrate' in argv:
-            job_type += "/calibrated/optimalChi2/"
+            job_type += "/calibrated/optimalChi2_sharedClusterAllHadronic/"
         short_job_type = 'recTopo'
         return default_options,job_type,short_job_type,False
 
@@ -235,7 +236,7 @@ if __name__=="__main__":
 
     recoTopoClusterGroup = parser.add_argument_group('RecoTopoCluster','Topological cluster reconstruction')
     recoTopoClusterGroup.add_argument('--sigma1', type=int, default=4, help='Energy threshold [in number of sigmas] for seeding')
-    recoTopoClusterGroup.add_argument('--sigma2', type=int, default=2, help='Energy threshold [in number of sigmas] for neighbours')
+    recoTopoClusterGroup.add_argument('--sigma2', type=float, default=2, help='Energy threshold [in number of sigmas] for neighbours')
     recoTopoClusterGroup.add_argument('--sigma3', type=int, default=0, help='Energy threshold [in number of sigmas] for last neighbours')
     recoTopoClusterGroup.add_argument("--calibrate", action='store_true', help="Calibrate Topo-cluster")
 
@@ -281,7 +282,7 @@ if __name__=="__main__":
     print 'FCCSim version: ',version
     magnetic_field = not args.bFieldOff
     b_field_str = "bFieldOn" if not args.bFieldOff else "bFieldOff"
-    num_events = args.numEvents if sim else -1 # if reconstruction is done use -1 to run over all events in file
+    num_events = args.numEvents if sim or args.recTopoClusters else -1 # if reconstruction is done use -1 to run over all events in file
     num_jobs = args.numJobs
     job_options = args.jobOptions
     output_path = args.output
@@ -299,7 +300,8 @@ if __name__=="__main__":
         short_job_type += "PU"+str(args.pileup)
     elif args.pileup:
         warning("'--pileup "+str(args.pileup)+"' is specified but no usecase was found. Please remove it or update job sending script.")
-    if (args.recPositions or args.recTopoClusters or args.recSlidingWindow) and args.pileup: # if reconstruction is run on pileup (mixed) events
+    
+    if (args.recPositions or args.recTopoClusters or args.recSlidingWindow) and args.pileup and not args.addPileupNoise: # if reconstruction is run on pileup (mixed) events
         job_type = job_type.replace("ntup", "ntupPU"+str(args.pileup)).replace("reco", "recoPU"+str(args.pileup))
         short_job_type += "PU"+str(args.pileup)
     
@@ -388,6 +390,8 @@ if __name__=="__main__":
         warning("Please note that '--fullSteel' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
     if args.fullLead and not args.local == "inits/reco.py":
         warning("Please note that '--fullLead' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
+    if args.recTopoClusters and args.numEvents != -1:
+        warning("Please note that '--recTopoClusters' is not run on all events available in simu (recommended: '--n -1')", True)
 
     # first make sure the output path for root files exists
     outdir = os.path.join( output_path, version, job_dir, job_type)
@@ -512,7 +516,7 @@ if __name__=="__main__":
             common_fccsw_command += ' --seed %i'%(seed)
         if args.noise:
             common_fccsw_command += ' --addElectronicsNoise'
-        if args.addPileupNoise:
+        elif args.addPileupNoise:
             common_fccsw_command += ' --addPileupNoise --pileup ' + str(args.pileup)
         if args.calibrate:
             common_fccsw_command += ' --calibrate'
@@ -531,9 +535,9 @@ if __name__=="__main__":
             common_fccsw_command += ' --winEta ' + str(args.winEta) + ' --winPhi ' + str(args.winPhi) + ' --enThreshold ' + str(args.enThreshold) + ' '
         if args.recTopoClusters:
             common_fccsw_command += ' --sigma1 ' + str(args.sigma1) + ' --sigma2 ' + str(args.sigma2) + ' --sigma3 ' + str(args.sigma3) + ' '
-            if args.pileup:
+            if args.pileup and not args.addPileupNoise:
                 common_fccsw_command +=  '--addElectronicsNoise --pileup ' + str(args.pileup)
-                if process=='MinBias':
+                if args.process=='MinBias':
                     common_fccsw_command += ' --prefixCollections merged '
                 else:
                     common_fccsw_command += ' --prefixCollections addedPU'

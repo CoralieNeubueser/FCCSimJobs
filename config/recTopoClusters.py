@@ -8,7 +8,7 @@ simparser.add_argument("--physics", action='store_true', help="Physics events")
 simparser.add_argument("--addElectronicsNoise", action='store_true', help="Add electronics noise (default: false)")
 simparser.add_argument("--addPileupNoise", action='store_true', help="Add pileup noise")
 simparser.add_argument('--sigma1', type=int, default=4, help='Energy threshold [in number of sigmas] for seeding')
-simparser.add_argument('--sigma2', type=int, default=2, help='Energy threshold [in number of sigmas] for neighbours')
+simparser.add_argument('--sigma2', type=float, default=2., help='Energy threshold [in number of sigmas] for neighbours')
 simparser.add_argument('--sigma3', type=int, default=0, help='Energy threshold [in number of sigmas] for last neighbours')
 simparser.add_argument('--detectorPath', type=str, help='Path to detectors', default = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj")
 simparser.add_argument("--calibrate", action='store_true', help="Calibrate clusters (default: false)")
@@ -37,6 +37,7 @@ prefix = simargs.prefixCollections
 print "number of events = ", num_events
 print "input name: ", input_name
 print "output name: ", output_name
+print "prefix : ", prefix
 print 'energy thresholds for reconstruction: ', sigma1, '-', sigma2, '-', sigma3
 print "detectors are taken from: ", path_to_detector
 print "calibrate clusters: ", calib
@@ -62,6 +63,7 @@ print "added pileup events : ", addedPU
 
 print "add electronic noise in Barrel: ", elNoise
 print "add pileup noise in Barrel: ", puNoise
+
 if puNoise:
     print 'adding noise corresponding to %i pileup events '%(puEvents)
 
@@ -187,7 +189,7 @@ readNeighboursMap = TopoCaloNeighbours("ReadNeighboursMap",
 if elNoise and not puNoise:
     inputNoisePerCell = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_segHcal_electronicsNoiseLevel.root"
     # Apply cell thresholds for electronics noise only if no pileup events have been merged
-    if addedPU != 0:
+    if addedPU > 0:
         inputNoisePerCell = "/afs/cern.ch/work/c/cneubuse/public/FCChh/inBfield/cellNoise_map_forPU"+str(addedPU)+"_electronicsPileup.root"
     
     print inputNoisePerCell
@@ -251,16 +253,17 @@ if elNoise and not puNoise:
                                                     hcalEndcapReadoutName = "",
                                                     hcalFwdReadoutName = "",
                                                     OutputLevel = INFO)
-    createTopoInputNoise.ecalBarrelCells.Path = inputCellCollectionECalBarrel
+    createTopoInputNoise.ecalBarrelCells.Path = "ECalBarrelCellsNoise"
     createTopoInputNoise.ecalEndcapCells.Path = "emptyCaloCells"
     createTopoInputNoise.ecalFwdCells.Path = "emptyCaloCells"
-    createTopoInputNoise.hcalBarrelCells.Path = inputCellCollectionHCalBarrel
+    createTopoInputNoise.hcalBarrelCells.Path = "HCalBarrelCellsNoise"
     createTopoInputNoise.hcalExtBarrelCells.Path = "emptyCaloCells"
     createTopoInputNoise.hcalEndcapCells.Path = "emptyCaloCells"
     createTopoInputNoise.hcalFwdCells.Path = "emptyCaloCells"
 
     readNoisyCellsMap = TopoCaloNoisyCells("ReadNoisyCellsMap",
-                                           fileName = inputNoisePerCell)
+                                           fileName = inputNoisePerCell,
+                                           OutputLevel = DEBUG)
 
     # Topo-Cluster Algorithm
     # Seed and neighbour thresholds 4 - 2 - 0 w/noise
@@ -395,10 +398,10 @@ if puNoise:
                                                     hcalEndcapReadoutName = "",
                                                     hcalFwdReadoutName = "",
                                                     OutputLevel = DEBUG)
-    createTopoInputNoise.ecalBarrelCells.Path = inputCellCollectionECalBarrel
+    createTopoInputNoise.ecalBarrelCells.Path = "ECalBarrelCellsNoise"
     createTopoInputNoise.ecalEndcapCells.Path = "emptyCaloCells"
     createTopoInputNoise.ecalFwdCells.Path = "emptyCaloCells"
-    createTopoInputNoise.hcalBarrelCells.Path =     inputCellCollectionHCalBarrel
+    createTopoInputNoise.hcalBarrelCells.Path = "HCalBarrelCellsNoise"
     createTopoInputNoise.hcalExtBarrelCells.Path = "emptyCaloCells"
     createTopoInputNoise.hcalEndcapCells.Path = "emptyCaloCells"
     createTopoInputNoise.hcalFwdCells.Path = "emptyCaloCells"
@@ -609,5 +612,5 @@ ApplicationMgr(
     EvtSel = 'NONE',
     EvtMax   = num_events,
     ExtSvc = [geoservice, podioevent],
-    OutputLevel = INFO
+#    OutputLevel = DEBUG
 )

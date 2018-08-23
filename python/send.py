@@ -96,7 +96,7 @@ def getJobInfo(argv):
 
     elif '--estimatePileup' in sys.argv:
         default_options = 'config/preparePileup.py'
-        job_type = "ana/pileup_cluster"
+        job_type = "ana/fullBarrel/pileup_cluster"
         short_job_type = "pileup"
         return default_options,job_type,short_job_type,False
 
@@ -114,18 +114,24 @@ def getJobInfo(argv):
  
     elif '--recTopoClusters' in argv:
         default_options = 'config/recTopoClusters.py'
-        job_type = "ntup/topoClusters"
+        job_type = "reco/topoClusters/"
+        short_job_type = "recTopo"
         if '--noise' in argv:
-            job_type = "reco/topoClusters/electronicsNoise"
+            job_type += "electronicsNoise/"
+            short_job_type += "_addNoise"
         elif '--addPileupNoise' in argv:
-            job_type = "reco/topoClusters/pileupNoise/"
+            job_type += "pileupNoise/"
+            short_job_type += "_addNoise"
         else:
-            job_type = "reco/topoClusters/noNoise"
+            job_type += "noNoise/"
+        if '--resegmentHCal' in argv:
+            job_type += "resegmentedHCal/"
+            short_job_type += "_resegmHCal"
         if '--calibrate' in argv:
-            job_type += "/calibrated/optimalChi2_sharedClusterAllHadronic/"
-        short_job_type = 'recTopo'
+            job_type += "/calibrated/08_2018/"
+            short_job_type += "_calib"
         return default_options,job_type,short_job_type,False
-
+    
     elif '--ntuple' in argv:
         default_options = '....' # TODO how ?
         job_type = "ntup"
@@ -225,6 +231,7 @@ if __name__=="__main__":
                               required = ('ljets' in sys.argv or 'top' in sys.argv or 'Wqq' in sys.argv
                                           or 'Zqq' in sys.argv or 'Hbb' in sys.argv),
                               help='Transverse momentum of simulated jets (valid only for Hbb, Wqq, Zqq, t, ljet)')
+    physicsGroup.add_argument('--rebase', action='store_true', help='Rebase the merged PU to baseline 0, with averaged mean values.')
 
     recoPositionsGroup = parser.add_argument_group('RecoPositions','Cell positions reconstruction')
     recoPositionsGroup.add_argument('--resegmentHCal', action='store_true', help="Resegment HCal cells to deltaEta = 0.025")
@@ -238,7 +245,7 @@ if __name__=="__main__":
     recoTopoClusterGroup.add_argument('--sigma1', type=int, default=4, help='Energy threshold [in number of sigmas] for seeding')
     recoTopoClusterGroup.add_argument('--sigma2', type=float, default=2, help='Energy threshold [in number of sigmas] for neighbours')
     recoTopoClusterGroup.add_argument('--sigma3', type=int, default=0, help='Energy threshold [in number of sigmas] for last neighbours')
-    recoTopoClusterGroup.add_argument("--calibrate", action='store_true', help="Calibrate Topo-cluster")
+    recoTopoClusterGroup.add_argument('--calibrate', action='store_true', help="Calibrate Topo-cluster")
 
     args, _ = parser.parse_known_args()
 
@@ -291,13 +298,16 @@ if __name__=="__main__":
     if args.addPileupNoise: # pileup is used to specify level of the pileup noise
         job_type = job_type.replace("pileupNoise", "pileupNoise/PU"+str(args.pileup))
         short_job_type += "PU"+str(args.pileup)
-    elif args.mergePileup: # merge cells from simulated events
+    elif args.mergePileup or args.addPileupToSignal: # merge cells from simulated events
         job_type = "simuPU"+str(args.pileup)
         short_job_type += "PU"+str(args.pileup)
+        if args.rebase:
+            short_job_type += "_rebase"
+            job_type += "/rebase/"
         num_events = args.numEvents
-    elif args.addPileupToSignal: # merge cells from simulated events
-        job_type = "simuPU"+str(args.pileup)
-        short_job_type += "PU"+str(args.pileup)
+    elif args.estimatePileup and args.pileup:
+        short_job_type += "_PU"+str(args.pileup)
+        job_type += "/PU"+str(args.pileup)+"/"
     elif args.pileup:
         warning("'--pileup "+str(args.pileup)+"' is specified but no usecase was found. Please remove it or update job sending script.")
     
@@ -376,12 +386,12 @@ if __name__=="__main__":
     rundir = os.getcwd()
     nbjobsSub=0
 
-    if args.mergePileup and not args.local == "inits/pileup.py":
-        warning("Please note that '--mergePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/pileup.py')", True)
+    if args.mergePileup and not args.local == "inits/reco.py":
+        warning("Please note that '--mergePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
     if args.addPileupToSignal and not args.local == "inits/pileup.py":
         warning("Please note that '--addPileupToSignal' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/pileup.py')", True)
-    if args.estimatePileup and not args.local == "inits/pileup.py":
-        warning("Please note that '--preparePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/pileup.py')", True)
+    if args.estimatePileup and not args.local == "inits/reco.py":
+        warning("Please note that '--preparePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
     if args.recPositions and not args.local == "inits/reco.py":
         warning("Please note that '--recPositions' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
     if args.recTopoClusters and not args.local == "inits/reco.py":
@@ -400,6 +410,8 @@ if __name__=="__main__":
         # if signal events are used (simu/) or mixed pileup events (simuPU.../)
         if not args.mergePileup and not args.addPileupNoise and not args.addPileupToSignal and args.pileup and not (args.pileup == 0):
             inputID = os.path.join(yamldir, version, job_dir, 'simuPU'+str(args.pileup))
+            if args.rebase:
+                inputID = os.path.join(yamldir, version, job_dir, 'simuPU'+str(args.pileup)+'/rebase/')
         else:
             inputID = os.path.join(yamldir, version, job_dir, 'simu')
         outputID = os.path.join(yamldir, version, job_dir, job_type)
@@ -420,6 +432,8 @@ if __name__=="__main__":
         all_inputs = ""
         if args.addPileupToSignal: 
             inputPileupID = os.path.join(yamldir, version, 'physics/MinBias/'+b_field_str+'/etaFull/simuPU'+str(args.pileup))
+            if args.rebase:
+                inputPileupID = os.path.join(yamldir, version, 'physics/MinBias/'+b_field_str+'/etaFull/simuPU'+str(args.pileup)+'/rebase/')
             pileup_input_files = getInputFiles(inputPileupID)
         else: 
             pileup_input_files = input_files
@@ -520,8 +534,12 @@ if __name__=="__main__":
             common_fccsw_command += ' --addPileupNoise --pileup ' + str(args.pileup)
         if args.calibrate:
             common_fccsw_command += ' --calibrate'
+        if args.rebase:
+            common_fccsw_command += ' --rebase'
         if args.physics:
             common_fccsw_command += ' --physics'
+        if args.resegmentHCal:
+            common_fccsw_command += ' --resegmentHCal '
         if '--local' in sys.argv:
             common_fccsw_command += ' --detectorPath ' + path_to_FCCSW
         if args.physics and args.mergePileup:
@@ -537,10 +555,11 @@ if __name__=="__main__":
             common_fccsw_command += ' --sigma1 ' + str(args.sigma1) + ' --sigma2 ' + str(args.sigma2) + ' --sigma3 ' + str(args.sigma3) + ' '
             if args.pileup and not args.addPileupNoise:
                 common_fccsw_command +=  '--addElectronicsNoise --pileup ' + str(args.pileup)
-                if args.process=='MinBias':
-                    common_fccsw_command += ' --prefixCollections merged '
-                else:
-                    common_fccsw_command += ' --prefixCollections addedPU'
+        if args.pileup and not args.addPileupNoise:
+            if args.process=='MinBias':
+                common_fccsw_command += ' --prefixCollections merged '
+            else:
+                common_fccsw_command += ' --prefixCollections addedPU'
                     
         print '-------------------------------------'
         print common_fccsw_command

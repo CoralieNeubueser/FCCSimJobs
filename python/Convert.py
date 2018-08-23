@@ -70,6 +70,7 @@ cluster_ene = r.std.vector(float)()
 cluster_x = r.std.vector(float)()
 cluster_y = r.std.vector(float)()
 cluster_z = r.std.vector(float)()
+cluster_cells = r.std.vector(float)()
 
 rec_eta = r.std.vector(float)()
 rec_phi = r.std.vector(float)()
@@ -105,6 +106,7 @@ outtree.Branch("cluster_energy", cluster_ene)
 outtree.Branch("cluster_x", cluster_x)
 outtree.Branch("cluster_y", cluster_y)
 outtree.Branch("cluster_z", cluster_z)
+outtree.Branch("cluster_cells", cluster_cells)
 
 outtree.Branch("rechit_pt", rec_pt)
 outtree.Branch("rechit_eta", rec_eta)
@@ -157,59 +159,69 @@ for event in intree:
             gen_status.push_back(g.core.status)
 
     if event.GetBranchStatus("caloClustersBarrel"):
+        print 'Using cluster collection "caloClustersBarrel" '
         for c in event.caloClustersBarrel:
             position = r.TVector3(c.core.position.x,c.core.position.y,c.core.position.z)
             cluster_ene.push_back(c.core.energy)
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x/10.)
-            cluster_y.push_back(c.core.position.y/10.)
-            cluster_z.push_back(c.core.position.z/10.)
+            cluster_x.push_back(c.core.position.x)
+            cluster_y.push_back(c.core.position.y)
+            cluster_z.push_back(c.core.position.z)
+            cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     elif event.GetBranchStatus("calibCaloClustersBarrelNoise"):
+        print 'Using cluster collection "calibCaloClustersBarrelNoise" '
         for c in event.calibCaloClustersBarrelNoise:
             position = r.TVector3(c.core.position.x,c.core.position.y,c.core.position.z)
             cluster_ene.push_back(c.core.energy)
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x/10.)
-            cluster_y.push_back(c.core.position.y/10.)
-            cluster_z.push_back(c.core.position.z/10.)
+            cluster_x.push_back(c.core.position.x)
+            cluster_y.push_back(c.core.position.y)
+            cluster_z.push_back(c.core.position.z)
+            cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     elif event.GetBranchStatus("caloClustersBarrelNoise"):
+        print 'Using cluster collection "caloClustersBarrelNoise" '
         for c in event.caloClustersBarrelNoise:
             position = r.TVector3(c.core.position.x,c.core.position.y,c.core.position.z)
             cluster_ene.push_back(c.core.energy)
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x/10.)
-            cluster_y.push_back(c.core.position.y/10.)
-            cluster_z.push_back(c.core.position.z/10.)
+            cluster_x.push_back(c.core.position.x)
+            cluster_y.push_back(c.core.position.y)
+            cluster_z.push_back(c.core.position.z)
+            cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     elif event.GetBranchStatus("caloClusters"):
+        print 'Using cluster collection "caloClusters" '
         for c in event.caloClusters:
             position = r.TVector3(c.core.position.x,c.core.position.y,c.core.position.z)
             cluster_ene.push_back(c.core.energy)
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x/10.)
-            cluster_y.push_back(c.core.position.y/10.)
-            cluster_z.push_back(c.core.position.z/10.)
+            cluster_x.push_back(c.core.position.x)
+            cluster_y.push_back(c.core.position.y)
+            cluster_z.push_back(c.core.position.z)
+            cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     elif event.GetBranchStatus("caloClustersNoise"):
+        print 'Using cluster collection "caloClustersNoise" '
         for c in event.caloClustersNoise:
             position = r.TVector3(c.core.position.x,c.core.position.y,c.core.position.z)
             cluster_ene.push_back(c.core.energy)
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x/10.)
-            cluster_y.push_back(c.core.position.y/10.)
-            cluster_z.push_back(c.core.position.z/10.)
+            cluster_x.push_back(c.core.position.x)
+            cluster_y.push_back(c.core.position.y)
+            cluster_z.push_back(c.core.position.z)
+            cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     else:
         if event.GetBranchStatus("HCalBarrelCellPositions"):
@@ -322,6 +334,23 @@ for event in intree:
                 rec_phi.push_back(position.Phi())
                 rec_pt.push_back(c.core.energy*position.Unit().Perp())
                 rec_layer.push_back(hcalFwd_decoder.get(c.core.cellId, "layer") + lastECalFwdLayer + 1)
+                rec_x.push_back(c.position.x/10.)
+                rec_y.push_back(c.position.y/10.)
+                rec_z.push_back(c.position.z/10.)
+                rec_detid.push_back(systemID(c.core.cellId))
+                rec_bits.push_back(c.core.bits)
+                E += c.core.energy
+                numHits += 1
+
+
+        if event.GetBranchStatus("HCalPositionedHits"):
+            for c in event.HCalPositionedHits:
+                position = r.TVector3(c.position.x,c.position.y,c.position.z)
+                rec_ene.push_back(c.core.energy)
+                rec_eta.push_back(position.Eta())
+                rec_phi.push_back(position.Phi())
+                rec_pt.push_back(c.core.energy*position.Unit().Perp())
+                rec_layer.push_back(ecalFwd_decoder.get(c.core.cellId, "layer"))
                 rec_x.push_back(c.position.x/10.)
                 rec_y.push_back(c.position.y/10.)
                 rec_z.push_back(c.position.z/10.)

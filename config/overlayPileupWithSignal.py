@@ -24,11 +24,16 @@ print "output name: ", output_name
 input_pileup_name = []
 input_pileup_name = simargs.inPileupFileNames
 print 'add %i pileup events '%(puEvents)
-print "Pileup input file names: ", input_pileup_name
 
 pileupFilenames = input_pileup_name
+
 import random
+seed=int(filter(str.isdigit, output_name))
+print 'seed : ', seed
+random.seed(seed)
 random.shuffle(pileupFilenames)
+
+print "Pileup input file names: ", pileupFilenames
 
 from Gaudi.Configuration import *
 
@@ -59,26 +64,29 @@ from Configurables import ApplicationMgr, FCCDataSvc, PodioInput, PodioOutput
 podioevent = FCCDataSvc("EventDataSvc", input=input_name)
 
 podioinput = PodioInput("PodioReader", collections = ["GenParticles", "GenVertices",
-                         "ECalBarrelCells", "ECalEndcapCells", "ECalFwdCells",
-                         "HCalBarrelCells", "HCalExtBarrelCells", "HCalEndcapCells", "HCalFwdCells"], OutputLevel = DEBUG)
+                         "ECalBarrelCells", #, "ECalEndcapCells", "ECalFwdCells",
+                         "HCalBarrelCells"], OutputLevel = DEBUG)
 
 ##############################################################################################################
 #######                                         GEOMETRY                                         #############
 ##############################################################################################################
 path_to_detector = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj"
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
-                  path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
+#                  path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
                   path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
-                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
-                  path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Endcaps_coneCryo.xml',
-                  path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Forward_coneCryo.xml',
-                  path_to_detector+'/Detector/DetFCChhTailCatcher/compact/FCChh_TailCatcher.xml',
-                  path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Solenoids.xml',
-                  path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Shielding.xml']
+#                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
+#                  path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Endcaps_coneCryo.xml',
+#                  path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Forward_coneCryo.xml',
+#                  path_to_detector+'/Detector/DetFCChhTailCatcher/compact/FCChh_TailCatcher.xml',
+#                  path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Solenoids.xml',
+#                  path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Shielding.xml'
+]
 
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc", detectors = detectors_to_use, OutputLevel = WARNING)
+
+
 
 ##############################################################################################################
 #######                                       ADD PILEUP EVENTS                              #############
@@ -140,56 +148,60 @@ from Configurables import PileupOverlayAlg
 overlay = PileupOverlayAlg()
 overlay.pileupFilenames = pileupFilenames
 overlay.randomizePileup = True
+overlay.doShuffleInputFiles = True
 overlay.mergeTools = [
                       "PileupCaloHitMergeTool/ECalBarrelHitMerge",
-                      "PileupCaloHitMergeTool/ECalEndcapHitMerge",
-                      "PileupCaloHitMergeTool/ECalFwdHitMerge",
+#                      "PileupCaloHitMergeTool/ECalEndcapHitMerge",
+#                      "PileupCaloHitMergeTool/ECalFwdHitMerge",
                       "PileupCaloHitMergeTool/HCalBarrelHitMerge",
-                      "PileupCaloHitMergeTool/HCalExtBarrelHitMerge",
-                      "PileupCaloHitMergeTool/HCalEndcapHitMerge",
-                      "PileupCaloHitMergeTool/HCalFwdHitMerge"
+#                      "PileupCaloHitMergeTool/HCalExtBarrelHitMerge",
+#                      "PileupCaloHitMergeTool/HCalEndcapHitMerge",
+#                      "PileupCaloHitMergeTool/HCalFwdHitMerge"
                       ]
 overlay.PileUpTool = pileuptool
+
+hcalOutput = "addedPUHCalBarrelCells"
 
 ##############################################################################################################
 #######                                       DIGITISATION                                       #############
 ##############################################################################################################
 from Configurables import CreateCaloCells
 createEcalBarrelCells = CreateCaloCells("CreateEcalBarrelCells",
-                                        doCellCalibration=False,
+                                        doCellCalibration=False, recalibrateBaseline =False,
                                         addCellNoise=False, filterCellNoise=False)
 createEcalBarrelCells.hits.Path="pileupECalBarrelCells"
 createEcalBarrelCells.cells.Path="addedPUECalBarrelCells"
 createEcalEndcapCells = CreateCaloCells("CreateEcalEndcapCells",
-                                        doCellCalibration=False,
+                                        doCellCalibration=False, recalibrateBaseline =False,
                                         addCellNoise=False, filterCellNoise=False)
 createEcalEndcapCells.hits.Path="pileupECalEndcapCells"
 createEcalEndcapCells.cells.Path="addedPUECalEndcapCells"
 createEcalFwdCells = CreateCaloCells("CreateEcalFwdCells",
-                                     doCellCalibration=False,
+                                     doCellCalibration=False, recalibrateBaseline =False,
                                      addCellNoise=False, filterCellNoise=False)
 createEcalFwdCells.hits.Path="pileupECalFwdCells"
 createEcalFwdCells.cells.Path="addedPUECalFwdCells"
 createHcalBarrelCells = CreateCaloCells("CreateHcalBarrelCells",
-                                        doCellCalibration=False,
+                                        doCellCalibration=False, recalibrateBaseline =False,
                                         addCellNoise=False, filterCellNoise=False)
 createHcalBarrelCells.hits.Path="pileupHCalBarrelCells"
-createHcalBarrelCells.cells.Path="addedPUHCalBarrelCells"
+createHcalBarrelCells.cells.Path=hcalOutput
 createHcalExtBarrelCells = CreateCaloCells("CreateHcalExtBarrelCells",
-                                           doCellCalibration=False,
+                                           doCellCalibration=False, recalibrateBaseline =False,
                                            addCellNoise=False, filterCellNoise=False)
 createHcalExtBarrelCells.hits.Path="pileupHCalExtBarrelCells"
 createHcalExtBarrelCells.cells.Path="addedPUHCalExtBarrelCells"
 createHcalEndcapCells = CreateCaloCells("CreateHcalEndcapCells",
-                                        doCellCalibration=False,
+                                        doCellCalibration=False, recalibrateBaseline =False,
                                         addCellNoise=False, filterCellNoise=False)
 createHcalEndcapCells.hits.Path="pileupHCalEndcapCells"
 createHcalEndcapCells.cells.Path="addedPUHCalEndcapCells"
 createHcalFwdCells = CreateCaloCells("CreateHcalFwdCells",
-                                     doCellCalibration=False,
+                                     doCellCalibration=False, recalibrateBaseline =False,
                                      addCellNoise=False, filterCellNoise=False)
 createHcalFwdCells.hits.Path="pileupHCalFwdCells"
 createHcalFwdCells.cells.Path="addedPUHCalFwdCells"
+
 
 # PODIO algorithm
 out = PodioOutput("out", OutputLevel=DEBUG)
@@ -207,12 +219,13 @@ out.AuditExecute = True
 list_of_algorithms = [podioinput,
                       overlay,
                       createEcalBarrelCells,
-                      createEcalEndcapCells,
-                      createEcalFwdCells,
+#                      createEcalEndcapCells,
+#                      createEcalFwdCells,
                       createHcalBarrelCells,
-                      createHcalExtBarrelCells,
-                      createHcalEndcapCells,
-                      createHcalFwdCells]
+#                      createHcalExtBarrelCells,
+#                      createHcalEndcapCells,
+#                      createHcalFwdCells
+                      ]
    
 list_of_algorithms += [out]
 
@@ -220,5 +233,5 @@ ApplicationMgr(
     TopAlg = list_of_algorithms,
     EvtSel = 'NONE',
     EvtMax   = num_events,
-    ExtSvc = [geoservice, podioevent, audsvc],
-    OutputLevel = INFO)
+    ExtSvc = [geoservice, podioevent],
+    OutputLevel = VERBOSE)

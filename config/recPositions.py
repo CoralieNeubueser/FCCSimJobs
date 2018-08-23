@@ -7,6 +7,8 @@ simparser.add_argument('-N','--numEvents',  type=int, help='Number of simulation
 simparser.add_argument('--prefixCollections', type=str, help='Prefix added to the collection names', default="")
 simparser.add_argument("--addMuons", action='store_true', help="Add tail catcher cells", default = False)
 simparser.add_argument("--hcalOnly", action='store_true', help="Convert only HCal cells", default = False)
+simparser.add_argument("--resegmentHCal", action='store_true', help="Merge HCal cells in DeltaEta=0.025 bins", default = False)
+simparser.add_argument('--detectorPath', type=str, help='Path to detectors', default = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj")
 
 simargs, _ = simparser.parse_known_args()
 
@@ -19,16 +21,20 @@ output_name = simargs.outName
 prefix = simargs.prefixCollections
 addMuons = simargs.addMuons
 hcalOnly = simargs.hcalOnly
+resegmentHCal = simargs.resegmentHCal
+path_to_detector = simargs.detectorPath
 print "number of events = ", num_events
 print "input name: ", input_name
 print "output name: ", output_name
 print "prefix added to the collections' name: ", prefix
+print "HCal only: ", hcalOnly
+print "Muons: ", addMuons
+print "resegment HCal: ", resegmentHCal
 
 from Gaudi.Configuration import *
 ##############################################################################################################
 #######                                         GEOMETRY                                         #############
 ##############################################################################################################
-path_to_detector = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj"
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
@@ -49,7 +55,9 @@ ecalEndcapReadoutName = "EMECPhiEtaReco"
 ecalFwdReadoutName = "EMFwdPhiEta"
 # HCAL readouts
 hcalBarrelReadoutName = "HCalBarrelReadout"
+hcalBarrelReadoutNamePhiEta = "BarHCal_Readout_phieta"
 hcalExtBarrelReadoutName = "HCalExtBarrelReadout"
+hcalExtBarrelReadoutNamePhiEta = "ExtBarHCal_Readout_phieta"
 hcalEndcapReadoutName = "HECPhiEtaReco"
 hcalFwdReadoutName = "HFwdPhiEta"
 # Tail Catcher readout
@@ -70,6 +78,9 @@ if hcalOnly:
     coll_names_read = [prefix+"TailCatcherCells", prefix+"HCalBarrelCells", prefix+"HCalExtBarrelCells", prefix+"GenParticles", prefix+"GenVertices"]
 
 podioinput = PodioInput("PodioReader", collections = coll_names_read, OutputLevel = DEBUG)
+
+hcalCells = prefix+"HCalBarrelCells"
+hcalExtCells = prefix+"HCalExtBarrelCells"
 
 ##############################################################################################################
 #######                                       RECALIBRATE ECAL                                   #############
@@ -103,11 +114,64 @@ rewriteHCalEC.inhits.Path = prefix+"HCalEndcapCells"
 rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
 
 ##############################################################################################################
+#######                                       RESEGMENT HCAL                                   #############
+##############################################################################################################
+
+from Configurables import CreateVolumeCaloPositions,RedoSegmentation,CreateCaloCells
+# Create cells in HCal
+# 2. step - rewrite the cellId using the Phi-Eta segmentation
+# 3. step - merge new cells corresponding to eta-phi segmentation
+
+# Hcal barrel cell positions                                                                                                                                                                                                              
+posHcalBarrel = CreateVolumeCaloPositions("posBarrelHcal", OutputLevel = INFO)
+posHcalBarrel.hits.Path = hcalCells
+posHcalBarrel.positionedHits.Path = "HCalBarrelPositions"
+# Use Phi-Eta segmentation in Hcal barrel                                                                                                                                                                                                  
+resegmentHcalBarrel = RedoSegmentation("ReSegmentationHcal",
+                                       # old bitfield (readout)                         
+                                       oldReadoutName = hcalBarrelReadoutName,
+                                       # specify which fields are going to be altered (deleted/rewritten)
+                                       oldSegmentationIds = ["module","row"],
+                                       # new bitfield (readout), with new segmentation                   
+                                       newReadoutName = hcalBarrelReadoutNamePhiEta,
+                                       OutputLevel = INFO,
+                                       inhits = "HCalBarrelPositions",
+                                       outhits = "HCalBarrelCellsStep2")
+createHcalBarrelCells = CreateCaloCells("CreateHCalBarrelCells",
+                                        doCellCalibration=False,
+                                        addCellNoise=False, filterCellNoise=False,
+                                        OutputLevel=DEBUG,
+                                        hits="HCalBarrelCellsStep2",
+                                        cells="newHCalBarrelCells")
+
+# Ext Hcal barrel cell positions                                                                                                                                                                                    
+posHcalExtBarrel = CreateVolumeCaloPositions("posExtBarrelHcal", OutputLevel = INFO)
+posHcalExtBarrel.hits.Path = hcalExtCells
+posHcalExtBarrel.positionedHits.Path = "HCalExtBarrelPositions"
+# Use Phi-Eta segmentation in Hcal barrel                                                                                                                                                                                                  
+resegmentHcalExtBarrel = RedoSegmentation("ReSegmentationHcalExt",
+                                          # old bitfield (readout)   
+                                          oldReadoutName = hcalExtBarrelReadoutName,
+                                          # specify which fields are going to be altered (deleted/rewritten)
+                                          oldSegmentationIds = ["module","row"],
+                                          # new bitfield (readout), with new segmentation                   
+                                          newReadoutName = hcalExtBarrelReadoutNamePhiEta,
+                                          OutputLevel = INFO,
+                                          inhits = "HCalExtBarrelPositions",
+                                          outhits = "HCalExtBarrelCellsStep2")
+createHcalExtBarrelCells = CreateCaloCells("CreateHCalExtBarrelCells",
+                                           doCellCalibration=False,
+                                           addCellNoise=False, filterCellNoise=False,
+                                           OutputLevel=INFO,
+                                           hits="HCalExtBarrelCellsStep2",
+                                           cells="newHCalExtBarrelCells")
+
+##############################################################################################################
 #######                                       CELL POSITIONS                                     #############
 ##############################################################################################################
 
 #Configure tools for calo cell positions
-from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool
+from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsHCalBarrelTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool
 ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel",
                                     readoutName = ecalBarrelReadoutName,
                                     OutputLevel = INFO)
@@ -123,6 +187,26 @@ HCalBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrel",
 HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel",
                                                  readoutName = hcalExtBarrelReadoutName,
                                                  OutputLevel = INFO)
+HCalBsegcells = CellPositionsHCalBarrelTool("CellPositionsHCalSegBarrel",
+                                            readoutName = hcalBarrelReadoutNamePhiEta,
+                                            radii = [291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 403.55, 428.55, 453.55],
+                                            OutputLevel = INFO)
+HCalExtBsegcells = CellPositionsHCalBarrelTool("CellPositionsHCalExtSegBarrel",
+                                               readoutName = hcalExtBarrelReadoutNamePhiEta,
+                                               radii = [ 356.05
+                                                         , 373.55
+                                                         , 398.55
+                                                         , 423.55
+                                                         , 291.05
+                                                         , 301.05
+                                                         , 313.55
+                                                         , 328.55
+                                                         , 348.55
+                                                         , 373.55
+                                                         , 398.55
+                                                         , 423.55
+                                                         ],
+                                               OutputLevel = INFO)
 HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC",
                                    readoutName = hcalEndcapReadoutName,
                                    OutputLevel = INFO)
@@ -151,6 +235,16 @@ positionsHcalBarrel = CreateCellPositions("positionsHcalBarrel",
 positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel",
                                           positionsTool=HCalExtBcells,
                                           hits = prefix+"HCalExtBarrelCells",
+                                          positionedHits = "HCalExtBarrelCellPositions",
+                                          OutputLevel = INFO)
+positionsHcalSegBarrel = CreateCellPositions("positionsSegHcalBarrel",
+                                          positionsTool=HCalBsegcells,
+                                          hits = "newHCalBarrelCells",
+                                          positionedHits = "HCalBarrelCellPositions",
+                                          OutputLevel = INFO)
+positionsHcalSegExtBarrel = CreateCellPositions("positionsSegHcalExtBarrel",
+                                          positionsTool=HCalExtBsegcells,
+                                          hits = "newHCalExtBarrelCells",
                                           positionedHits = "HCalExtBarrelCellPositions",
                                           OutputLevel = INFO)
 positionsEcalEndcap = CreateCellPositions("positionsEcalEndcap",
@@ -206,20 +300,51 @@ out.AuditExecute = True
 
 list_of_algorithms = [podioinput]
 
-if hcalOnly:
-    list_of_algorithms += [positionsHcalBarrel, positionsHcalExtBarrel, positionsTailCatcher]
-else:
+if not hcalOnly:
     list_of_algorithms += [rewriteECalEC,
                            rewriteHCalEC,
                            positionsEcalBarrel,
                            positionsEcalEndcap,
                            positionsEcalFwd,
-                           positionsHcalBarrel,
-                           positionsHcalExtBarrel,
                            positionsHcalEndcap,
-                           positionsHcalFwd]
+                           positionsHcalFwd,
+                           ]
+    if resegmentHCal:
+        list_of_algorithms += [
+            posHcalBarrel,
+            resegmentHcalBarrel,
+            createHcalBarrelCells,
+           # posHcalExtBarrel,
+            #resegmentHcalExtBarrel,
+            #createHcalExtBarrelCells,
+            positionsHcalSegBarrel,
+            positionsHcalExtBarrel,
+            ]
+    else:
+        list_of_algorithms += [ positionsHcalBarrel,
+                                positionsHcalExtBarrel,
+                                ]
+
+else:
+    if resegmentHCal:
+        list_of_algorithms += [
+            posHcalBarrel,
+            resegmentHcalBarrel,
+            createHcalBarrelCells,
+#            posHcalExtBarrel,
+#            resegmentHcalExtBarrel,
+#            createHcalExtBarrelCells,
+            positionsHcalSegBarrel,
+            positionsHcalExtBarrel,
+            ]
+    else:
+        list_of_algorithms += [ positionsHcalBarrel,
+                                positionsHcalExtBarrel,
+                                ]
+        
 if addMuons:
     list_of_algorithms += [positionsTailCatcher]
+
 list_of_algorithms += [out]
 
 ApplicationMgr(

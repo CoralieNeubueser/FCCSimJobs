@@ -58,6 +58,9 @@ intree=infile.Get('events')
 gen_eta = r.std.vector(float)()
 gen_phi = r.std.vector(float)()
 gen_pt  = r.std.vector(float)()
+gen_x  = r.std.vector(float)()
+gen_y  = r.std.vector(float)()
+gen_z  = r.std.vector(float)()
 gen_energy = r.std.vector(float)()
 gen_pdgid = r.std.vector(float)()
 gen_status = r.std.vector(float)()
@@ -120,6 +123,9 @@ outtree.Branch("rechit_detid", rec_detid)
 outtree.Branch("rechit_bits", rec_bits)
 
 outtree.Branch("gen_pt", gen_pt)
+outtree.Branch("gen_x", gen_x)
+outtree.Branch("gen_y", gen_y)
+outtree.Branch("gen_z", gen_z)
 outtree.Branch("gen_eta", gen_eta)
 outtree.Branch("gen_phi", gen_phi)
 outtree.Branch("gen_energy", gen_energy)
@@ -140,7 +146,10 @@ for event in intree:
     if event.GetBranchStatus("GenParticles"):
         for g in event.GenParticles:
             position = r.TVector3(g.core.p4.px,g.core.p4.py,g.core.p4.pz)
-            
+            gen_x.push_back(g.core.p4.px)
+            gen_y.push_back(g.core.p4.py)
+            gen_z.push_back(g.core.p4.pz)
+
             pt=math.sqrt(g.core.p4.px**2+g.core.p4.py**2)
             eta=position.Eta()
             phi=position.Phi()

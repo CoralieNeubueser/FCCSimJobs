@@ -81,7 +81,7 @@ recalibEcalBarrel = CalibrateInLayersTool("RecalibrateEcalBarrel",
                                           layerFieldName = "layer")
 recreateEcalBarrelCells = CreateCaloCells("redoEcalBarrelCells",
                                           doCellCalibration=True,
-                                          calibTool=recalibEcalBarrel,
+                                          calibTool=recalibEcalBarrel, recalibrateBaseline =False,
                                           addCellNoise=False, filterCellNoise=False)
 recreateEcalBarrelCells.hits.Path="ECalBarrelCells"
 recreateEcalBarrelCells.cells.Path="ECalBarrelCellsRedo"

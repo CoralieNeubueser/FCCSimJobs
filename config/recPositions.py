@@ -62,8 +62,7 @@ hcalCellCollection = "HCalBarrelCells"
 from Configurables import ApplicationMgr, FCCDataSvc, PodioInput, PodioOutput
 podioevent = FCCDataSvc("EventDataSvc", input=input_name)
 
-inputCollections = ["ECalBarrelCells", "HCalBarrelCells", "HCalExtBarrelCells", "ECalEn\
-dcapCells", "HCalEndcapCells", "ECalFwdCells", "HCalFwdCells", "TailCatcherCells","GenParticles","GenVertices"]
+inputCollections = ["ECalBarrelCells", "HCalBarrelCells", "HCalExtBarrelCells", "ECalEndcapCells", "HCalEndcapCells", "ECalFwdCells", "HCalFwdCells", "TailCatcherCells","GenParticles","GenVertices"]
 
 if simargs.flat:
     inputCollections = ["ECalBarrelCells", "HCalBarrelCells"]
@@ -94,8 +93,7 @@ rewriteECalEC = RewriteBitfield("RewriteECalEC",
                                 removeIds = ["sublayer"],
                                 # new bitfield (readout), with new segmentation
                                 newReadoutName = ecalEndcapReadoutName,
-                                debugPrint = 10,
-                                OutputLevel = DEBUG)
+                                debugPrint = 10)
 # clusters are needed, with deposit position and cellID in bits
 rewriteECalEC.inhits.Path = "ECalEndcapCells"
 rewriteECalEC.outhits.Path = "newECalEndcapCells"
@@ -107,8 +105,7 @@ rewriteHCalEC = RewriteBitfield("RewriteHCalEC",
                                 removeIds = ["sublayer"],
                                 # new bitfield (readout), with new segmentation
                                 newReadoutName = hcalEndcapReadoutName,
-                                debugPrint = 10,
-                                OutputLevel = DEBUG)
+                                debugPrint = 10)
 # clusters are needed, with deposit position and cellID in bits
 rewriteHCalEC.inhits.Path = "HCalEndcapCells"
 rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
@@ -137,8 +134,7 @@ rewriteECalEC = RewriteBitfield("RewriteECalEC",
                                 removeIds = ["sublayer"],
                                 # new bitfield (readout), with new segmentation
                                 newReadoutName = ecalEndcapReadoutName,
-                                debugPrint = 10,
-                                OutputLevel = DEBUG)
+                                debugPrint = 10)
 # clusters are needed, with deposit position and cellID in bits
 rewriteECalEC.inhits.Path = "ECalEndcapCells"
 rewriteECalEC.outhits.Path = "newECalEndcapCells"
@@ -150,8 +146,7 @@ rewriteHCalEC = RewriteBitfield("RewriteHCalEC",
                                 removeIds = ["sublayer"],
                                 # new bitfield (readout), with new segmentation
                                 newReadoutName = hcalEndcapReadoutName,
-                                debugPrint = 10,
-                                OutputLevel = DEBUG)
+                                debugPrint = 10)
 # clusters are needed, with deposit position and cellID in bits
 rewriteHCalEC.inhits.Path = "HCalEndcapCells"
 rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
@@ -163,76 +158,60 @@ rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
 #Configure tools for calo cell positions
 from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool, CellPositionsTailCatcherTool 
 ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel", 
-                                    readoutName = ecalBarrelReadoutName, 
-                                    OutputLevel = INFO)
+                                    readoutName = ecalBarrelReadoutName)
 HCalBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrel", 
-                                              readoutName = hcalBarrelReadoutName, 
-                                              OutputLevel = INFO)
+                                              readoutName = hcalBarrelReadoutName)
 if not simargs.flat:
     EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC", 
-                                           readoutName = ecalEndcapReadoutName, 
-                                           OutputLevel = DEBUG)
+                                           readoutName = ecalEndcapReadoutName)
     ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd", 
-                                              readoutName = ecalFwdReadoutName, 
-                                              OutputLevel = INFO)
+                                              readoutName = ecalFwdReadoutName)
     HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel", 
-                                                     readoutName = hcalExtBarrelReadoutName, 
-                                                     OutputLevel = INFO)
+                                                     readoutName = hcalExtBarrelReadoutName)
     HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC", 
-                                          readoutName = hcalEndcapReadoutName, 
-                                          OutputLevel = INFO)
+                                          readoutName = hcalEndcapReadoutName)
     HCalFwdcells = CellPositionsCaloDiscsTool("CellPositionsHCalFwd", 
-                                              readoutName = hcalFwdReadoutName, 
-                                              OutputLevel = INFO)
+                                              readoutName = hcalFwdReadoutName)
     TailCatchercells = CellPositionsTailCatcherTool("CellPositionsTailCatcher", 
                                                     readoutName = tailCatcherReadoutName, 
-                                                    centralRadius = 901.5,
-                                                    OutputLevel = INFO)
+                                                    centralRadius = 901.5)
 
 # cell positions
 from Configurables import CreateCellPositions
 positionsEcalBarrel = CreateCellPositions("positionsEcalBarrel", 
                                           positionsTool=ECalBcells, 
                                           hits = "ECalBarrelCellsRedo", 
-                                          positionedHits = "ECalBarrelCellPositions", 
-                                          OutputLevel = INFO)
+                                          positionedHits = "ECalBarrelCellPositions")
 positionsHcalBarrel = CreateCellPositions("positionsHcalBarrel", 
                                           positionsTool=HCalBcells, 
                                           hits = "HCalBarrelCells", 
-                                          positionedHits = "HCalBarrelCellPositions", 
-                                          OutputLevel = INFO)
+                                          positionedHits = "HCalBarrelCellPositions")
 
 if not simargs.flat:
     positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel", 
                                                  positionsTool=HCalExtBcells, 
                                                  hits = "HCalExtBarrelCells", 
-                                                 positionedHits = "HCalExtBarrelCellPositions", 
-                                                 OutputLevel = INFO)
+                                                 positionedHits = "HCalExtBarrelCellPositions")
     positionsEcalEndcap = CreateCellPositions("positionsEcalEndcap", 
                                               positionsTool=EMECcells, 
                                               hits = "newECalEndcapCells", 
-                                              positionedHits = "ECalEndcapCellPositions", 
-                                              OutputLevel = INFO)
+                                              positionedHits = "ECalEndcapCellPositions")
     positionsHcalEndcap = CreateCellPositions("positionsHcalEndcap", 
                                               positionsTool=HECcells, 
                                               hits = "newHCalEndcapCells", 
-                                              positionedHits = "HCalEndcapCellPositions", 
-                                              OutputLevel = INFO)
+                                              positionedHits = "HCalEndcapCellPositions")
     positionsEcalFwd = CreateCellPositions("positionsEcalFwd", 
                                            positionsTool=ECalFwdcells, 
                                            hits = "ECalFwdCells", 
-                                           positionedHits = "ECalFwdCellPositions", 
-                                           OutputLevel = INFO)
+                                           positionedHits = "ECalFwdCellPositions")
     positionsHcalFwd = CreateCellPositions("positionsHcalFwd", 
                                            positionsTool=HCalFwdcells, 
                                            hits = "HCalFwdCells", 
-                                           positionedHits = "HCalFwdCellPositions", 
-                                           OutputLevel = INFO)
+                                           positionedHits = "HCalFwdCellPositions")
     positionsTailCatcher = CreateCellPositions("positionsTailCatcher", 
                                                positionsTool=TailCatchercells, 
                                                hits = "TailCatcherCells", 
-                                               positionedHits = "TailCatcherCellPositions", 
-                                               OutputLevel = INFO)
+                                               positionedHits = "TailCatcherCellPositions")
 
 # PODIO algorithm
 out = PodioOutput("out", OutputLevel=DEBUG)
@@ -260,7 +239,6 @@ if not simargs.flat:
                             rewriteHCalEC,
                             positionsEcalEndcap,
                             positionsEcalFwd, 
-                            positionsHcalBarrel, 
                             positionsHcalExtBarrel, 
                             positionsHcalEndcap, 
                             positionsHcalFwd,
@@ -274,4 +252,5 @@ ApplicationMgr(
     EvtSel = 'NONE',
     EvtMax   = num_events,
     ExtSvc = [geoservice, podioevent, audsvc],
+    #OutputLevel = DEBUG
 )

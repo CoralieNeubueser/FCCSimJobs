@@ -107,7 +107,7 @@ def getJobInfo(argv):
         return default_options,job_type,short_job_type,False
 
     elif '--addPileupToSignal' in argv:
-        default_options = 'config/overlayPileupWithSignal.py'
+        default_options = 'config/overlayPileup.py'
         job_type = "simuPU"
         short_job_type = "addPileup"
         return default_options,job_type,short_job_type,False
@@ -388,8 +388,8 @@ if __name__=="__main__":
 
     if args.mergePileup and not args.local == "inits/reco.py":
         warning("Please note that '--mergePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
-    if args.addPileupToSignal and not args.local == "inits/pileup.py":
-        warning("Please note that '--addPileupToSignal' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/pileup.py')", True)
+    if args.addPileupToSignal and not args.local == "inits/reco.py":
+        warning("Please note that '--addPileupToSignal' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
     if args.estimatePileup and not args.local == "inits/reco.py":
         warning("Please note that '--preparePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
     if args.recPositions and not args.local == "inits/reco.py":
@@ -431,9 +431,7 @@ if __name__=="__main__":
     if args.mergePileup or args.addPileupToSignal:
         all_inputs = ""
         if args.addPileupToSignal: 
-            inputPileupID = os.path.join(yamldir, version, 'physics/MinBias/'+b_field_str+'/etaFull/simuPU'+str(args.pileup))
-            if args.rebase:
-                inputPileupID = os.path.join(yamldir, version, 'physics/MinBias/'+b_field_str+'/etaFull/simuPU'+str(args.pileup)+'/rebase/')
+            inputPileupID = os.path.join(yamldir, version, 'physics/MinBias/'+b_field_str+'/etaFull/simu/')
             pileup_input_files = getInputFiles(inputPileupID)
         else: 
             pileup_input_files = input_files
@@ -542,7 +540,9 @@ if __name__=="__main__":
             common_fccsw_command += ' --resegmentHCal '
         if '--local' in sys.argv:
             common_fccsw_command += ' --detectorPath ' + path_to_FCCSW
-        if args.physics and args.mergePileup:
+        if args.mergePileup:
+            common_fccsw_command += ' --pileup ' + str(args.pileup)
+        elif args.addPileupToSignal:
             common_fccsw_command += ' --pileup ' + str(args.pileup)            
         if args.recPositions:
             if args.hcalOnly:
@@ -554,12 +554,10 @@ if __name__=="__main__":
         if args.recTopoClusters:
             common_fccsw_command += ' --sigma1 ' + str(args.sigma1) + ' --sigma2 ' + str(args.sigma2) + ' --sigma3 ' + str(args.sigma3) + ' '
             if args.pileup and not args.addPileupNoise:
-                common_fccsw_command +=  '--addElectronicsNoise --pileup ' + str(args.pileup)
+                common_fccsw_command +=  '--pileup ' + str(args.pileup)
         if args.pileup and not args.addPileupNoise:
             if args.process=='MinBias':
                 common_fccsw_command += ' --prefixCollections merged '
-            else:
-                common_fccsw_command += ' --prefixCollections addedPU'
                     
         print '-------------------------------------'
         print common_fccsw_command
@@ -609,14 +607,13 @@ if __name__=="__main__":
             if args.mergePileup:
                 frun.write('%s --inName %s\n'%(common_fccsw_command, all_inputs))
             elif args.addPileupToSignal:
-                frun.write('%s --inName %s --inPileupFileNames %s\n'%( common_fccsw_command, input_files[i], all_inputs))
+                frun.write('%s --inSignalName %s --inName %s\n'%(common_fccsw_command, input_files[i], all_inputs))
             else:
                 frun.write('%s --inName %s\n'%(common_fccsw_command, input_files[i]))
         if args.recPositions:
             frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
         elif args.recTopoClusters or args.recSlidingWindow:
-            frun.write('ls %s \n'%(outdir))
             frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters.root\n'%(current_dir,outfile))
             ntup_path = outdir.replace('/reco', '/ntup')
             if not ut.dir_exist(ntup_path):

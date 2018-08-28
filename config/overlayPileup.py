@@ -5,7 +5,7 @@ simparser.add_argument('--inSignalName', type=str, help='Name of the input file 
 simparser.add_argument('--outName', type=str, help='Name of the output file', required=True)
 simparser.add_argument('-N','--numEvents', type=int, help='Number of simulation events to run', required=True)
 simparser.add_argument('--pileup', type=int, help='Pileup', default = 1000)
-simparser.add_argument('--detectorPath', type=str, help='Path to detectors', default = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj")
+#simparser.add_argument('--detectorPath', type=str, help='Path to detectors', default = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj")
 simparser.add_argument('--rebase', action='store_true', help='Rebase the merged PU to baseline 0, with averaged mean values.', default=False)
 simargs, _ = simparser.parse_known_args()
 
@@ -13,17 +13,17 @@ print "=================================="
 print "==      GENERAL SETTINGS       ==="
 print "=================================="
 num_events = simargs.numEvents
-path_to_detector = simargs.detectorPath
 rebase = simargs.rebase
-print "detectors are taken from: ", path_to_detector
 input_name = simargs.inName
 if simargs.inSignalName:
-    input_signal_name = simargs.inSignalName
-    print "input signal name: ", input_name
+    signalFilename = simargs.inSignalName
+    print "input signal name: ", signalFilename
+    noSignal = False
 output_name = simargs.outName
 print "input pileup name: ", input_name
 print "output name: ", output_name
 print "rebase mean energy/cell to 0: ", rebase
+print "no signal: ", noSignal
 print "=================================="
 
 from Gaudi.Configuration import *
@@ -32,26 +32,22 @@ from Gaudi.Configuration import *
 pileupFilenames = input_name
 # the file containing the signal events
 if simargs.inSignalName:
-    signalFilename = input_signal_name
-    noSignal = False
     # the collections to be read from the signal event
     signalCollections = ["GenParticles", "GenVertices",
                          "ECalBarrelCells", "ECalEndcapCells", "ECalFwdCells",
                          "HCalBarrelCells", "HCalExtBarrelCells", "HCalEndcapCells", "HCalFwdCells"]
     # Data service
-    from Configurables import FCCDataSvc
+    from Configurables import ApplicationMgr, FCCDataSvc, PodioInput
     podioevent = FCCDataSvc("EventDataSvc", input=signalFilename)
     # use PodioInput for Signal
     from Configurables import PodioInput
     podioinput = PodioInput("PodioReader", collections=signalCollections, OutputLevel=DEBUG)
-    list_of_algorithms = [podioevent]
+    list_of_algorithms = [podioinput]
 else:
-    signalFilename = ""
     noSignal = True
     list_of_algorithms = []
     from Configurables import FCCDataSvc
     podioevent = FCCDataSvc("EventDataSvc")
-print signalFilename, noSignal
 
 import random
 seed=int(filter(str.isdigit, output_name))
@@ -154,14 +150,12 @@ overlay.mergeTools = [
 overlay.PileUpTool = pileuptool
 overlay.noSignal = noSignal
 
-
 ecalBarrelOutput1 = "mergedECalBarrelCells"
 hcalBarrelOutput1 = "mergedHCalBarrelCells"
 
 if rebase:
     ecalBarrelOutput1 = "mergedECalBarrelCellsStep1"
     hcalBarrelOutput1 = "mergedHCalBarrelCellsStep1"
-
 
 ##############################################################################################################
 #######                                       DIGITISATION                                       #############
@@ -259,5 +253,5 @@ ApplicationMgr( TopAlg=list_of_algorithms,
                 EvtSel='NONE',
                 EvtMax=num_events,
                 ExtSvc=[geoservice, podioevent],
- #               OutputLevel = VERBOSE
+                OutputLevel = VERBOSE
  )

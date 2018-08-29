@@ -5,8 +5,8 @@ simparser.add_argument('--inSignalName', type=str, help='Name of the input file 
 simparser.add_argument('--outName', type=str, help='Name of the output file', required=True)
 simparser.add_argument('-N','--numEvents', type=int, help='Number of simulation events to run', required=True)
 simparser.add_argument('--pileup', type=int, help='Pileup', default = 1000)
-#simparser.add_argument('--detectorPath', type=str, help='Path to detectors', default = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj")
 simparser.add_argument('--rebase', action='store_true', help='Rebase the merged PU to baseline 0, with averaged mean values.', default=False)
+simparser.add_argument('--prefixCollections', type=str, help='Prefix added to the collection names', default="")
 simargs, _ = simparser.parse_known_args()
 
 print "=================================="
@@ -15,6 +15,8 @@ print "=================================="
 num_events = simargs.numEvents
 rebase = simargs.rebase
 input_name = simargs.inName
+pileup = simargs.pileup
+prefix = simargs.prefixCollections
 if simargs.inSignalName:
     signalFilename = simargs.inSignalName
     print "input signal name: ", signalFilename
@@ -43,6 +45,7 @@ if simargs.inSignalName:
     from Configurables import PodioInput
     podioinput = PodioInput("PodioReader", collections=signalCollections, OutputLevel=DEBUG)
     list_of_algorithms = [podioinput]
+    pileup = 1
 else:
     noSignal = True
     list_of_algorithms = []
@@ -87,66 +90,68 @@ particlemergetool.mergedGenVertices.Path = "pileupGenVertices"
 # edm data from simulation: hits and positioned hits
 from Configurables import PileupCaloHitMergeTool
 ecalbarrelmergetool = PileupCaloHitMergeTool("ECalBarrelHitMerge")
-ecalbarrelmergetool.pileupHitsBranch = "ECalBarrelCells"
+ecalbarrelmergetool.pileupHitsBranch = prefix+"ECalBarrelCells"
 ecalbarrelmergetool.signalHits = "ECalBarrelCells"
 ecalbarrelmergetool.mergedHits = "pileupECalBarrelCells"
 
 # edm data from simulation: hits and positioned hits
 ecalendcapmergetool = PileupCaloHitMergeTool("ECalEndcapHitMerge")
-ecalendcapmergetool.pileupHitsBranch = "ECalEndcapCells"
+ecalendcapmergetool.pileupHitsBranch = prefix+"ECalEndcapCells"
 ecalendcapmergetool.signalHits = "ECalEndcapCells"
 ecalendcapmergetool.mergedHits = "pileupECalEndcapCells"
 
 # edm data from simulation: hits and positioned hits
 ecalfwdmergetool = PileupCaloHitMergeTool("ECalFwdHitMerge")
 # branchnames for the pileup
-ecalfwdmergetool.pileupHitsBranch = "ECalFwdCells"
+ecalfwdmergetool.pileupHitsBranch = prefix+"ECalFwdCells"
 ecalfwdmergetool.signalHits = "ECalFwdCells"
 ecalfwdmergetool.mergedHits = "pileupECalFwdCells"
 
 # edm data from simulation: hits and positioned hits
 hcalbarrelmergetool = PileupCaloHitMergeTool("HCalBarrelHitMerge")
-hcalbarrelmergetool.pileupHitsBranch = "HCalBarrelCells"
+hcalbarrelmergetool.pileupHitsBranch = prefix+"HCalBarrelCells"
 hcalbarrelmergetool.signalHits = "HCalBarrelCells"
 hcalbarrelmergetool.mergedHits = "pileupHCalBarrelCells"
 
 # edm data from simulation: hits and positioned hits
 hcalextbarrelmergetool = PileupCaloHitMergeTool("HCalExtBarrelHitMerge")
-hcalextbarrelmergetool.pileupHitsBranch = "HCalExtBarrelCells"
+hcalextbarrelmergetool.pileupHitsBranch = prefix+"HCalExtBarrelCells"
 hcalextbarrelmergetool.signalHits = "HCalExtBarrelCells"
 hcalextbarrelmergetool.mergedHits = "pileupHCalExtBarrelCells"
 
 # edm data from simulation: hits and positioned hits
 hcalfwdmergetool = PileupCaloHitMergeTool("HCalFwdHitMerge")
-hcalfwdmergetool.pileupHitsBranch = "HCalFwdCells"
+hcalfwdmergetool.pileupHitsBranch = prefix+"HCalFwdCells"
 hcalfwdmergetool.signalHits = "HCalFwdCells"
 hcalfwdmergetool.mergedHits = "pileupHCalFwdCells"
 
 # edm data from simulation: hits and positioned hits
 hcalfwdmergetool = PileupCaloHitMergeTool("HCalEndcapHitMerge")
-hcalfwdmergetool.pileupHitsBranch = "HCalEndcapCells"
+hcalfwdmergetool.pileupHitsBranch = prefix+"HCalEndcapCells"
 hcalfwdmergetool.signalHits = "HCalEndcapCells"
 hcalfwdmergetool.mergedHits = "pileupHCalEndcapCells"
 
 # use the pileuptool to specify the number of pileup
 from Configurables import ConstPileUp
-pileuptool = ConstPileUp("MyPileupTool", numPileUpEvents=simargs.pileup)
+pileuptool = ConstPileUp("MyPileupTool", numPileUpEvents=pileup)
 
 # algorithm for the overlay
 from Configurables import PileupOverlayAlg
 overlay = PileupOverlayAlg()
 overlay.pileupFilenames = pileupFilenames
-overlay.doShuffleInputFiles = True
+#overlay.doShuffleInputFiles = True
 overlay.randomizePileup = True
 overlay.mergeTools = [
- "PileupParticlesMergeTool/ParticlesMerge",
-  "PileupCaloHitMergeTool/ECalBarrelHitMerge",
-  "PileupCaloHitMergeTool/ECalEndcapHitMerge",
-  "PileupCaloHitMergeTool/ECalFwdHitMerge",
-  "PileupCaloHitMergeTool/HCalBarrelHitMerge",
-  "PileupCaloHitMergeTool/HCalExtBarrelHitMerge",
-  "PileupCaloHitMergeTool/HCalEndcapHitMerge",
-  "PileupCaloHitMergeTool/HCalFwdHitMerge"]
+    "PileupCaloHitMergeTool/ECalBarrelHitMerge",
+    "PileupCaloHitMergeTool/ECalEndcapHitMerge",
+    "PileupCaloHitMergeTool/ECalFwdHitMerge",
+    "PileupCaloHitMergeTool/HCalBarrelHitMerge",
+    "PileupCaloHitMergeTool/HCalExtBarrelHitMerge",
+    "PileupCaloHitMergeTool/HCalEndcapHitMerge",
+    "PileupCaloHitMergeTool/HCalFwdHitMerge"]
+if noSignal:
+    overlay.mergeTools += ["PileupParticlesMergeTool/ParticlesMerge"]
+    
 overlay.PileUpTool = pileuptool
 overlay.noSignal = noSignal
 
@@ -226,7 +231,7 @@ rebaseHcalBarrelCells = CreateCaloCells("RebaseHCalBarrelCells",
 # PODIO algorithm
 from Configurables import PodioOutput
 out = PodioOutput("out", OutputLevel=DEBUG)
-out.outputCommands = ["drop *", "keep pileupGenVertices", "keep pileupGenParticles", "keep mergedECalBarrelCells", "keep mergedECalEndcapCells", "keep mergedECalFwdCells", "keep mergedHCalBarrelCells", "keep mergedHCalExtBarrelCells", "keep mergedHCalEndcapCells", "keep mergedHCalFwdCells"]
+out.outputCommands = ["drop *", "keep mergedGenVertices", "keep mergedGenParticles", "keep mergedECalBarrelCells", "keep mergedECalEndcapCells", "keep mergedECalFwdCells", "keep mergedHCalBarrelCells", "keep mergedHCalExtBarrelCells", "keep mergedHCalEndcapCells", "keep mergedHCalFwdCells"]
 out.filename = output_name
 
 list_of_algorithms += [overlay,
@@ -253,5 +258,5 @@ ApplicationMgr( TopAlg=list_of_algorithms,
                 EvtSel='NONE',
                 EvtMax=num_events,
                 ExtSvc=[geoservice, podioevent],
-                OutputLevel = VERBOSE
+                OutputLevel = INFO
  )

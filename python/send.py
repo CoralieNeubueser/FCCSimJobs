@@ -431,7 +431,7 @@ if __name__=="__main__":
     if args.mergePileup or args.addPileupToSignal:
         all_inputs = ""
         if args.addPileupToSignal: 
-            inputPileupID = os.path.join(yamldir, version, 'physics/MinBias/'+b_field_str+'/etaFull/simu/')
+            inputPileupID = os.path.join(yamldir, version, 'physics/MinBias/'+b_field_str+'/etaFull/simuPU'+str(args.pileup)+'/')
             pileup_input_files = getInputFiles(inputPileupID)
         else: 
             pileup_input_files = input_files
@@ -555,9 +555,8 @@ if __name__=="__main__":
             common_fccsw_command += ' --sigma1 ' + str(args.sigma1) + ' --sigma2 ' + str(args.sigma2) + ' --sigma3 ' + str(args.sigma3) + ' '
             if args.pileup and not args.addPileupNoise:
                 common_fccsw_command +=  '--pileup ' + str(args.pileup)
-        if args.pileup and not args.addPileupNoise:
-            if args.process=='MinBias':
-                common_fccsw_command += ' --prefixCollections merged '
+        if args.pileup and not args.addPileupNoise and not args.mergePileup:
+            common_fccsw_command += ' --prefixCollections merged '
                     
         print '-------------------------------------'
         print common_fccsw_command
@@ -611,10 +610,16 @@ if __name__=="__main__":
             else:
                 frun.write('%s --inName %s\n'%(common_fccsw_command, input_files[i]))
         if args.recPositions:
-            frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
+            if args.resegmentHCal:
+                frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s --resegmentedHCal \n'%(current_dir,outfile))
+            else:
+                frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
         elif args.recTopoClusters or args.recSlidingWindow:
-            frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters.root\n'%(current_dir,outfile))
+            if args.resegmentHCal:
+                frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters.root --resegmentedHCal \n'%(current_dir,outfile))
+            else:
+                frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters.root\n'%(current_dir,outfile))
             ntup_path = outdir.replace('/reco', '/ntup')
             if not ut.dir_exist(ntup_path):
                 os.system("mkdir -p %s"%(ntup_path))

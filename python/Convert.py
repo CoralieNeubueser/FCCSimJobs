@@ -3,6 +3,7 @@ import sys
 import math
 import numpy as n
 import ROOT as r
+import argparse
 
 from ROOT import gSystem
 result=gSystem.Load("libDDCorePlugins")
@@ -13,7 +14,9 @@ if result < 0:
 system_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4")
 ecalBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,cryo:1,type:3,subtype:3,layer:8,eta:9,phi:10")
 hcalBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,module:8,row:9,layer:5")
+hcalBarrelEtaPhi_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,layer:5,eta:9,phi:10")
 hcalExtBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,module:8,row:9,layer:5")
+hcalExtBarrelEtaPhi_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,type:2:,layer:4,eta:10,phi:10")
 ecalEndcap_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:10,phi:10")
 hcalEndcap_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:10,phi:10")
 ecalFwd_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:11,phi:10")
@@ -51,6 +54,10 @@ if len(sys.argv)!=3:
     print 'usage python Convert.py infile outfile'
 infile_name = sys.argv[1]
 outfile_name = sys.argv[2]
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--resegmentedHCal', action='store_true', help="HCal cells are resegmented to deltaEta = 0.025, use different decoder")
+args, _ = parser.parse_known_args()
 
 infile=r.TFile.Open(infile_name)
 intree=infile.Get('events')
@@ -143,12 +150,14 @@ for event in intree:
     Ehad = 0
     EemLast = 0
     EhadFirst = 0
-    if event.GetBranchStatus("GenParticles"):
-        for g in event.GenParticles:
+    if event.GetBranchStatus("GenParticles") and event.GetBranchStatus("GenVertices"):
+        for n, g in enumerate( event.GenParticles,0 ):
             position = r.TVector3(g.core.p4.px,g.core.p4.py,g.core.p4.pz)
-            gen_x.push_back(g.core.p4.px)
-            gen_y.push_back(g.core.p4.py)
-            gen_z.push_back(g.core.p4.pz)
+            for m, v in enumerate( event.GenVertices ):
+                if n==m:
+                    gen_x.push_back(v.position.x)
+                    gen_y.push_back(v.position.y)
+                    gen_z.push_back(v.position.z)
 
             pt=math.sqrt(g.core.p4.px**2+g.core.p4.py**2)
             eta=position.Eta()
@@ -175,9 +184,9 @@ for event in intree:
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x)
-            cluster_y.push_back(c.core.position.y)
-            cluster_z.push_back(c.core.position.z)
+            cluster_x.push_back(c.core.position.x/10.)
+            cluster_y.push_back(c.core.position.y/10.)
+            cluster_z.push_back(c.core.position.z/10.)
             cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     elif event.GetBranchStatus("calibCaloClustersBarrelNoise"):
@@ -188,9 +197,9 @@ for event in intree:
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x)
-            cluster_y.push_back(c.core.position.y)
-            cluster_z.push_back(c.core.position.z)
+            cluster_x.push_back(c.core.position.x/10.)
+            cluster_y.push_back(c.core.position.y/10.)
+            cluster_z.push_back(c.core.position.z/10.)
             cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     elif event.GetBranchStatus("caloClustersBarrelNoise"):
@@ -201,9 +210,9 @@ for event in intree:
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x)
-            cluster_y.push_back(c.core.position.y)
-            cluster_z.push_back(c.core.position.z)
+            cluster_x.push_back(c.core.position.x/10.)
+            cluster_y.push_back(c.core.position.y/10.)
+            cluster_z.push_back(c.core.position.z/10.)
             cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     elif event.GetBranchStatus("caloClusters"):
@@ -214,9 +223,9 @@ for event in intree:
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x)
-            cluster_y.push_back(c.core.position.y)
-            cluster_z.push_back(c.core.position.z)
+            cluster_x.push_back(c.core.position.x/10.)
+            cluster_y.push_back(c.core.position.y/10.)
+            cluster_z.push_back(c.core.position.z/10.)
             cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     elif event.GetBranchStatus("caloClustersNoise"):
@@ -227,9 +236,9 @@ for event in intree:
             cluster_eta.push_back(position.Eta())
             cluster_phi.push_back(position.Phi())
             cluster_pt.push_back(c.core.energy*position.Unit().Perp())
-            cluster_x.push_back(c.core.position.x)
-            cluster_y.push_back(c.core.position.y)
-            cluster_z.push_back(c.core.position.z)
+            cluster_x.push_back(c.core.position.x/10.)
+            cluster_y.push_back(c.core.position.y/10.)
+            cluster_z.push_back(c.core.position.z/10.)
             cluster_cells.push_back(c.hits_end-c.hits_begin)
 
     else:
@@ -240,7 +249,10 @@ for event in intree:
                 rec_eta.push_back(position.Eta())
                 rec_phi.push_back(position.Phi())
                 rec_pt.push_back(c.core.energy*position.Unit().Perp())
-                rec_layer.push_back(hcalBarrel_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
+                if args.resegmentedHCal:
+                    rec_layer.push_back(hcalBarrelEtaPhi_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
+                else:
+                    rec_layer.push_back(hcalBarrel_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
                 rec_x.push_back(c.position.x/10.)
                 rec_y.push_back(c.position.y/10.)
                 rec_z.push_back(c.position.z/10.)
@@ -278,7 +290,10 @@ for event in intree:
                 rec_eta.push_back(position.Eta())
                 rec_phi.push_back(position.Phi())
                 rec_pt.push_back(c.core.energy*position.Unit().Perp())
-                rec_layer.push_back(hcalExtBarrel_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
+                if args.resegmentedHCal:
+                    rec_layer.push_back(hcalExtBarrelEtaPhi_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
+                else:
+                    rec_layer.push_back(hcalExtBarrel_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
                 rec_x.push_back(c.position.x/10.)
                 rec_y.push_back(c.position.y/10.)
                 rec_z.push_back(c.position.z/10.)

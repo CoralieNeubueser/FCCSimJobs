@@ -24,13 +24,23 @@ noise = simargs.addElectronicsNoise
 path_to_detector = simargs.detectorPath
 winEta = simargs.winEta
 winPhi = simargs.winPhi
-winEtaSeed = int(math.floor(winEta*2./4.))
-winPhiSeed = int(math.floor(winPhi*2./4.))
-winEtaPos = int(math.floor(winEta*2./4.))
-winPhiPos = int(math.floor(winPhi*2./4.))
-winEtaDup = int(math.floor(winEta*3./4.))
-winPhiDup = int(math.floor(winPhi*2./4.))
 
+## default EM reco settings
+if winEta == 7 and winPhi==19:
+    winEtaSeed = 7
+    winSeed = 15
+    winEtaPos = 3
+    winPhiPos = 11
+    winEtaDup = 5
+    winPhiDup = 11
+## window sizes for approximated for final window size 
+else:
+    winEtaSeed = int(math.floor(winEta*2./4.))
+    winPhiSeed = int(math.floor(winPhi*2./4.))
+    winEtaPos = int(math.floor(winEta*2./4.))
+    winPhiPos = int(math.floor(winPhi*2./4.))
+    winEtaDup = int(math.floor(winEta*3./4.))
+    winPhiDup = int(math.floor(winPhi*2./4.))
 ## make sure that window size is odd
 if winEtaSeed %2 == 0:
     winEtaSeed = winEtaSeed +1 
@@ -52,6 +62,12 @@ print "input name: ", input_name
 print "output name: ", output_name
 print "electronic noise in E and HCAL: ", noise
 print "detectors are taken from: ", path_to_detector
+print "seed cluster eta size: ", winEtaSeed
+print "seed cluster phi size: ", winPhiSeed
+print "pos cluster eta size: ", winEtaPos
+print "pos cluster phi size: ", winPhiPos
+print "dup cluster eta size: ", winEtaDup
+print "dup cluster phi size: ", winPhiDup
 print "final cluster eta size: ", winEta
 print "final cluster phi size: ", winPhi
 print "energy threshold for seeding cluster [GeV]: ", enThreshold
@@ -64,12 +80,14 @@ from Gaudi.Configuration import *
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
-                  # path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
-                  # path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
+                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
                   path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Endcaps_coneCryo.xml',
                   path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Forward_coneCryo.xml',
                   path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Solenoids.xml',
                   path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_Shielding.xml']
+
+if not noise:
+    detectors_to_use += [path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml']
 
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc", detectors = detectors_to_use)
@@ -167,29 +185,6 @@ if noise:
                                            OutputLevel = INFO) 
     createHcalBarrelCells.hits.Path ="HCalBarrelCells" 
     createHcalBarrelCells.cells.Path ="HCalBarrelCellsNoise"
-
-    # noiseEndcap = NoiseCaloCellsFromFileTool("NoiseEndcap",
-    #                                          readoutName = ecalEndcapReadoutName,
-    #                                          noiseFileName = ecalEndcapNoisePath,
-    #                                          elecNoiseHistoName = ecalEndcapNoiseHistName,
-    #                                          activeFieldName = "layer",
-    #                                          addPileup = False,
-    #                                          numRadialLayers = 40,
-    #                                          noiseCells = "ECalEndcapElNoiseOnlyCells")
-    # endcapGeometry = TubeLayerPhiEtaCaloTool("EcalEndcapGeo",
-    #                                          readoutName = ecalEndcapReadoutName,
-    #                                          activeVolumeName = "layerEnvelope",
-    #                                          activeFieldName = "layer",
-    #                                          activeVolumesNumber = 40,
-    #                                          fieldNames = ["system"],
-    #                                          fieldValues = [6])
-    # createEcalEndcapCells = CreateCaloCells("CreateECalEndcapCells",
-    #                                         geometryTool = endcapGeometry,
-    #                                         doCellCalibration=False, # already calibrated
-    #                                         addCellNoise=True, filterCellNoise=False,
-    #                                         noiseTool = noiseEndcap,
-    #                                         hits="ECalEndcapCells",
-    #                                         cells="ECalEndcapCellsNoise")
 
     # additionally for HCal
     from Configurables import CreateVolumeCaloPositions
@@ -292,9 +287,9 @@ towers.hcalFwdCells.Path = "HCalFwdCells"
 
 createclusters = CreateCaloClustersSlidingWindow("CreateCaloClusters",
                                                  towerTool = towers,
-                                                 nEtaWindow = 7, nPhiWindow = 15,
-                                                 nEtaPosition = 3, nPhiPosition = 11,
-                                                 nEtaDuplicates = 5, nPhiDuplicates = 11,
+                                                 nEtaWindow = winEtaSeed, nPhiWindow = winPhiSeed,
+                                                 nEtaPosition = winEtaPos, nPhiPosition = winPhiPos,
+                                                 nEtaDuplicates = winEtaDup, nPhiDuplicates = winPhiDup,
                                                  nEtaFinal = winEta, nPhiFinal = winPhi,
                                                  energyThreshold = enThreshold)
 createclusters.clusters.Path = "caloClusters"
@@ -325,7 +320,6 @@ if noise:
     list_of_algorithms += [createEcalBarrelCells, createHcalBarrelCells, positionsHcalNoise, resegmentHcalNoise, createclustersNoise]
 else:
     list_of_algorithms += [positionsHcal, resegmentHcal, positionsExtHcal, resegmentExtHcal, createclusters] 
-
 
 list_of_algorithms += [out]
 

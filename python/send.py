@@ -617,13 +617,14 @@ if __name__=="__main__":
             frun.write('rm edm.root \n')
         elif args.recTopoClusters or args.recSlidingWindow:
             if args.resegmentHCal:
-                frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters.root --resegmentedHCal \n'%(current_dir,outfile))
+                frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters_%s.root --resegmentedHCal \n'%(current_dir,outfile,seed))
             else:
-                frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters.root\n'%(current_dir,outfile))
+                frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters_%s.root\n'%(current_dir,outfile,seed))
+            frun.write('rm $JOBDIR/clusters_%s.root \n'%(seed))
             ntup_path = outdir.replace('/reco', '/ntup')
             if not ut.dir_exist(ntup_path):
                 os.system("mkdir -p %s"%(ntup_path))
-            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/clusters.root %s/%s\n'%(ntup_path, outfile))
+            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/clusters_%s.root %s/%s\n'%(seed,ntup_path,outfile))
             if args.calibrate:
                 ana_path = ntup_path.replace('/ntup', '/ana/')
                 if not ut.dir_exist(ana_path):
@@ -632,12 +633,13 @@ if __name__=="__main__":
                 frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
         if not args.no_eoscopy:
           frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
-          frun.write('rm $JOBDIR/%s \n'%(outfile))
+          
+        frun.write('rm $JOBDIR/%s \n'%(outfile))
         frun.close()
 
         if args.lsf:
             #cmdBatch="bsub -M 4000000 -R \"pool=40000\" -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
-            cmdBatch="bsub  -R 'rusage[mem=16000:pool=8000]' -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
+            cmdBatch="bsub  -R 'rusage[mem=30000:pool=8000]' -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
             batchid=-1
             job,batchid=ut.SubmitToLsf(cmdBatch,10)
         elif args.no_submit:

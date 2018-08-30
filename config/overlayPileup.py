@@ -17,6 +17,7 @@ rebase = simargs.rebase
 input_name = simargs.inName
 pileup = simargs.pileup
 prefix = simargs.prefixCollections
+noSignal = True
 if simargs.inSignalName:
     signalFilename = simargs.inSignalName
     print "input signal name: ", signalFilename
@@ -39,11 +40,12 @@ if simargs.inSignalName:
                          "ECalBarrelCells", "ECalEndcapCells", "ECalFwdCells",
                          "HCalBarrelCells", "HCalExtBarrelCells", "HCalEndcapCells", "HCalFwdCells"]
     # Data service
-    from Configurables import ApplicationMgr, FCCDataSvc, PodioInput
+    from Configurables import ApplicationMgr, FCCDataSvc, PodioInput, PodioOutput
     podioevent = FCCDataSvc("EventDataSvc", input=signalFilename)
+    
     # use PodioInput for Signal
-    from Configurables import PodioInput
-    podioinput = PodioInput("PodioReader", collections=signalCollections, OutputLevel=DEBUG)
+    podioinput = PodioInput("PodioReader", collections=signalCollections)
+    
     list_of_algorithms = [podioinput]
     pileup = 1
 else:
@@ -57,22 +59,6 @@ seed=int(filter(str.isdigit, output_name))
 print 'seed : ', seed
 random.seed(seed)
 random.shuffle(pileupFilenames)
-
-##############################################################################################################
-#######                                         GEOMETRY                                         #############
-##############################################################################################################
-path_to_detector = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj"
-detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
-                  path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
-                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
-                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
-                  path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Endcaps_coneCryo.xml',
-                  path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Forward_coneCryo.xml',
-#                  path_to_detector+'/Detector/DetFCChhTailCatcher/compact/FCChh_TailCatcher.xml',
-                  ]
-
-from Configurables import GeoSvc
-geoservice = GeoSvc("GeoSvc", detectors = detectors_to_use, OutputLevel = WARNING)
 
 # edm data from generation: particles and vertices
 from Configurables import PileupParticlesMergeTool
@@ -139,7 +125,7 @@ pileuptool = ConstPileUp("MyPileupTool", numPileUpEvents=pileup)
 from Configurables import PileupOverlayAlg
 overlay = PileupOverlayAlg()
 overlay.pileupFilenames = pileupFilenames
-#overlay.doShuffleInputFiles = True
+overlay.doShuffleInputFiles = True
 overlay.randomizePileup = True
 overlay.mergeTools = [
     "PileupCaloHitMergeTool/ECalBarrelHitMerge",
@@ -149,8 +135,6 @@ overlay.mergeTools = [
     "PileupCaloHitMergeTool/HCalExtBarrelHitMerge",
     "PileupCaloHitMergeTool/HCalEndcapHitMerge",
     "PileupCaloHitMergeTool/HCalFwdHitMerge"]
-if noSignal:
-    overlay.mergeTools += ["PileupParticlesMergeTool/ParticlesMerge"]
     
 overlay.PileUpTool = pileuptool
 overlay.noSignal = noSignal
@@ -230,7 +214,7 @@ rebaseHcalBarrelCells = CreateCaloCells("RebaseHCalBarrelCells",
                                         cells="mergedHCalBarrelCells")
 # PODIO algorithm
 from Configurables import PodioOutput
-out = PodioOutput("out", OutputLevel=DEBUG)
+out = PodioOutput("out")
 out.outputCommands = ["drop *", "keep mergedGenVertices", "keep mergedGenParticles", "keep mergedECalBarrelCells", "keep mergedECalEndcapCells", "keep mergedECalFwdCells", "keep mergedHCalBarrelCells", "keep mergedHCalExtBarrelCells", "keep mergedHCalEndcapCells", "keep mergedHCalFwdCells"]
 out.filename = output_name
 
@@ -257,6 +241,6 @@ from Configurables import ApplicationMgr
 ApplicationMgr( TopAlg=list_of_algorithms,
                 EvtSel='NONE',
                 EvtMax=num_events,
-                ExtSvc=[geoservice, podioevent],
-                OutputLevel = INFO
+                ExtSvc=[podioevent],
+#                OutputLevel = DEBUG
  )

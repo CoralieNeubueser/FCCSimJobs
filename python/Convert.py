@@ -155,9 +155,9 @@ for event in intree:
             position = r.TVector3(g.core.p4.px,g.core.p4.py,g.core.p4.pz)
             for m, v in enumerate( event.GenVertices ):
                 if n==m:
-                    gen_x.push_back(v.position.x)
-                    gen_y.push_back(v.position.y)
-                    gen_z.push_back(v.position.z)
+                    gen_x.push_back(v.position.x/10.)
+                    gen_y.push_back(v.position.y/10.)
+                    gen_z.push_back(v.position.z/10.)
 
             pt=math.sqrt(g.core.p4.px**2+g.core.p4.py**2)
             eta=position.Eta()

@@ -639,7 +639,10 @@ if __name__=="__main__":
 
         if args.lsf:
             #cmdBatch="bsub -M 4000000 -R \"pool=40000\" -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
-            cmdBatch="bsub  -R 'rusage[mem=30000:pool=8000]' -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
+            if args.addPileupToSignal or args.mergePileup:
+                cmdBatch="bsub  -R 'rusage[mem=40000:pool=8000]' -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
+            else:
+                cmdBatch="bsub  -R 'rusage[mem=20000:pool=8000]' -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)    
             batchid=-1
             job,batchid=ut.SubmitToLsf(cmdBatch,10)
         elif args.no_submit:

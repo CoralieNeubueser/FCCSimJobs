@@ -218,7 +218,6 @@ rebaseHcalBarrelCells = CreateCaloCells("RebaseHCalBarrelCells",
 from Configurables import PodioOutput
 out = PodioOutput("out")
 out.outputCommands = ["drop *", "keep GenVertices", "keep GenParticles", "keep mergedECalBarrelCells", "keep mergedECalEndcapCells", "keep mergedECalFwdCells", "keep mergedHCalBarrelCells", "keep mergedHCalExtBarrelCells", "keep mergedHCalEndcapCells", "keep mergedHCalFwdCells"]
-out.outputCommands = ["drop *", "keep mergedGenVertices", "keep mergedGenParticles", "keep mergedECalBarrelCells", "keep mergedECalEndcapCells", "keep mergedECalFwdCells", "keep mergedHCalBarrelCells", "keep mergedHCalExtBarrelCells", "keep mergedHCalEndcapCells", "keep mergedHCalFwdCells"]
 out.filename = output_name
 
 list_of_algorithms += [overlay,

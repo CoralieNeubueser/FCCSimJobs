@@ -128,13 +128,15 @@ overlay.pileupFilenames = pileupFilenames
 overlay.doShuffleInputFiles = True
 overlay.randomizePileup = True
 overlay.mergeTools = [
+#    "PileupParticlesMergeTool/ParticlesMerge",
     "PileupCaloHitMergeTool/ECalBarrelHitMerge",
-    "PileupCaloHitMergeTool/ECalEndcapHitMerge",
-    "PileupCaloHitMergeTool/ECalFwdHitMerge",
+#    "PileupCaloHitMergeTool/ECalEndcapHitMerge",
+#    "PileupCaloHitMergeTool/ECalFwdHitMerge",
     "PileupCaloHitMergeTool/HCalBarrelHitMerge",
     "PileupCaloHitMergeTool/HCalExtBarrelHitMerge",
-    "PileupCaloHitMergeTool/HCalEndcapHitMerge",
-    "PileupCaloHitMergeTool/HCalFwdHitMerge"]
+#    "PileupCaloHitMergeTool/HCalEndcapHitMerge",
+#    "PileupCaloHitMergeTool/HCalFwdHitMerge"
+    ]
     
 overlay.PileUpTool = pileuptool
 overlay.noSignal = noSignal
@@ -215,17 +217,17 @@ rebaseHcalBarrelCells = CreateCaloCells("RebaseHCalBarrelCells",
 # PODIO algorithm
 from Configurables import PodioOutput
 out = PodioOutput("out")
-out.outputCommands = ["drop *", "keep mergedGenVertices", "keep mergedGenParticles", "keep mergedECalBarrelCells", "keep mergedECalEndcapCells", "keep mergedECalFwdCells", "keep mergedHCalBarrelCells", "keep mergedHCalExtBarrelCells", "keep mergedHCalEndcapCells", "keep mergedHCalFwdCells"]
+out.outputCommands = ["drop *", "keep GenVertices", "keep GenParticles", "keep mergedECalBarrelCells", "keep mergedECalEndcapCells", "keep mergedECalFwdCells", "keep mergedHCalBarrelCells", "keep mergedHCalExtBarrelCells", "keep mergedHCalEndcapCells", "keep mergedHCalFwdCells"]
 out.filename = output_name
 
 list_of_algorithms += [overlay,
                        createEcalBarrelCells,
-                       createEcalEndcapCells,
-                       createEcalFwdCells,
+#                       createEcalEndcapCells,
+#                       createEcalFwdCells,
                        createHcalBarrelCells,
                        createHcalExtBarrelCells,
-                       createHcalEndcapCells,
-                       createHcalFwdCells,
+#                       createHcalEndcapCells,
+#                       createHcalFwdCells,
                        ]
 
 if rebase: 

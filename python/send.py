@@ -620,11 +620,11 @@ if __name__=="__main__":
                 frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters_%s.root --resegmentedHCal \n'%(current_dir,outfile,seed))
             else:
                 frun.write('python %s/python/Convert.py $JOBDIR/%s $JOBDIR/clusters_%s.root\n'%(current_dir,outfile,seed))
-            frun.write('rm $JOBDIR/clusters_%s.root \n'%(seed))
             ntup_path = outdir.replace('/reco', '/ntup')
             if not ut.dir_exist(ntup_path):
                 os.system("mkdir -p %s"%(ntup_path))
             frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/clusters_%s.root %s/%s\n'%(seed,ntup_path,outfile))
+            frun.write('rm $JOBDIR/clusters_%s.root \n'%(seed))
             if args.calibrate:
                 ana_path = ntup_path.replace('/ntup', '/ana/')
                 if not ut.dir_exist(ana_path):
@@ -632,8 +632,8 @@ if __name__=="__main__":
                 frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/calibrateCluster_histograms.root %s\n'%( ana_path+'/'+outfile ))
                 frun.write('rm $JOBDIR/calibrateCluster_histograms.root \n')
         if not args.no_eoscopy:
-          frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
-          
+            frun.write('python /afs/cern.ch/work/h/helsens/public/FCCutils/eoscopy.py $JOBDIR/%s %s\n'%(outfile,outdir))
+            
         frun.write('rm $JOBDIR/%s \n'%(outfile))
         frun.close()
 

@@ -264,6 +264,37 @@ resegmentExtHcal = RedoSegmentation("ReSegmentationExtHcal",
                              inhits = "HCalExtBarrelPositions",
 outhits = "newHCalExtBarrelCells")
 
+# additionally for HCal
+from Configurables import CreateVolumeCaloPositions
+positionsHcal = CreateVolumeCaloPositions("positionsHcal")
+positionsHcal.hits.Path = "HCalBarrelCells"
+positionsHcal.positionedHits.Path = "HCalBarrelPositions"
+positionsExtHcal = CreateVolumeCaloPositions("positionsExtHcal")
+positionsExtHcal.hits.Path = "HCalExtBarrelCells"
+positionsExtHcal.positionedHits.Path = "HCalExtBarrelPositions"
+
+from Configurables import RedoSegmentation
+resegmentHcal = RedoSegmentation("ReSegmentationHcal",
+                             # old bitfield (readout)
+                             oldReadoutName = hcalBarrelReadoutName,
+                             # # specify which fields are going to be altered (deleted/rewritten)
+                             # oldSegmentationIds = ["eta","phi"],
+                             # new bitfield (readout), with new segmentation
+                             newReadoutName = hcalBarrelPhiEtaReadoutName,
+                             debugPrint = 10,
+                             inhits = "HCalBarrelPositions",
+outhits = "newHCalBarrelCells")
+resegmentExtHcal = RedoSegmentation("ReSegmentationExtHcal",
+                             # old bitfield (readout)
+                             oldReadoutName = hcalExtBarrelReadoutName,
+                             # # specify which fields are going to be altered (deleted/rewritten)
+                             # oldSegmentationIds = ["eta","phi"],
+                             # new bitfield (readout), with new segmentation
+                             newReadoutName = hcalExtBarrelPhiEtaReadoutName,
+                             debugPrint = 10,
+                             inhits = "HCalExtBarrelPositions",
+outhits = "newHCalExtBarrelCells")
+
 #Create calo clusters
 from Configurables import CreateCaloClustersSlidingWindow, CaloTowerTool
 from GaudiKernel.PhysicalConstants import pi

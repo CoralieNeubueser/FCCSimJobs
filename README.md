@@ -48,7 +48,7 @@ If **--physics** is used, the following options are possible
    - **--process** to select the type of process. Two types are available
       - from LHE events, this will call a gun that will produce 2 back to back objects, the following keys are available **ljets**, **cjets**, **bjets**, **top**, **Wqq**, **Zqq**, **Hbb**. If this option is used, the pt can also be given using **--pt**
       - from calling pythia8 direcly, thus generating the events at 100TeV, the following keys are available **MinBias**, **Haa**, **Zee**, **H4e**
-      
+      - the eta range is set to plus/minus **--etaMax** for the gun. NOT used for the processes: **MinBias**, **Haa**, **Zee**, **H4e**   
 
 Common options
 ==============
@@ -78,7 +78,7 @@ Simulation
 ```
 python python/send.py --singlePart --particle 11 -e 500 -n 10 -N 1 --condor --etaMin 3.5 --etaMax 3.5
 python python/send.py --singlePart --particle -211 -e 10 -n 10 -N 1 --condor
-python python/send.py --physics --process Zqq --pt 1000 -n 10 -N 1 --lsf
+python python/send.py --physics --process Zqq --pt 1000 --etaMax 1.5 -n 10 -N 1 --lsf
 python python/send.py --physics --process Haa -n 10 -N 1 --lsf
 ```
 
@@ -88,7 +88,7 @@ Reconstruction
 ```
 python python/send.py --singlePart --particle 11 -e 500 -N 1 --condor --etaMin 3.5 --etaMax 3.5 --recSlidingWindow
 python python/send.py --singlePart --particle -211 -e 10 -N 1 --condor --recSlidingWindow --noise
-python python/send.py --physics --process Zqq --pt 1000 -N 1 --lsf --recSlidingWindow
+python python/send.py --physics --process Zqq --pt 1000 --etaMax 1.5 -N 1 --lsf --recSlidingWindow
 python python/send.py --physics --process Haa  -N 1 --lsf --recSlidingWindow
 python python/send.py --local inits/reco.py --singlePart --particle 11 -e 100 -N 1 --condor --recPositions
 ```
@@ -101,7 +101,7 @@ python python/send.py --local inits/reco.py --physics --process MinBias -N 1 --l
 - to include pileup noise, add **--addPileupNoise** and specify the pileup configuration with **--pileup** (choose from: 100, 200, 500 or 1000) 
 ```
 python python/send.py --local inits/reco.py --physics --process MinBias -N 1 --lsf --recTopoClusters --noise
-python python/send.py --local inits/reco.py --physics --process MinBias -N 1 --lsf --recTopoClusters --addPileupNoise --mu 100
+python python/send.py --local inits/reco.py --physics --process MinBias -N 1 --lsf --recTopoClusters --addPileupNoise --pileup 100
 ```
 
 Pileup
@@ -126,11 +126,21 @@ There are several approaches of addressing the pile-up in the detector:
 
 2.1.2 merge signal and PU events that are later passed to the reconstruction (**--addPileupToSignal**)
 ```
+python python/send.py --physics --process MinBias --mergePileup --pileup 200 --local inits/reco.py -n 10 -N 1 --lsf
+
+python python/send.py --singlePart --particle -211 -e 10 --addPileupToSignal --pileup 200 --local inits/reco.py -n -1 -N 1 --lsf
+```
+
+2.1.1 merge MinBias events (**--mergePileup**)
+
+2.1.2 merge signal and PU events that are later passed to the reconstruction (**--addPileupToSignal**)
+```
 python python/send.py --singlePart --particle -211 -e 10 --addPileupToSignal --pileup 200 --local inits/pileup.py -N 1 --lsf
 ```
 
 Miscellaneous
 ==============
+
 Formatting rules:
 - The directory names are used to identify their content. Please make sure that their are:
   - only root files with **edm classes** in /simu/ and /reco/
@@ -148,6 +158,7 @@ This is something that can not be done centrally yet as I do not have rights to 
 
 Expert mode
 ===========
+
 check for a given process
 ```
 python python/run.py --check --version v03 --process physics/MinBias/bFieldOn/etaFull/simu
@@ -177,7 +188,6 @@ make the web page
 ```
 python python/run.py --web --version v03
 ```
-
 
 
 WARNING

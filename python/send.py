@@ -162,6 +162,8 @@ def getJobInfo(argv):
 
     else:
         default_options = 'config/geantSim.py'
+        if '--flat' in argv:
+            default_options = 'config/geantSim_fastBarrel.py'
         job_type = "simu"
         short_job_type = "sim"
         return default_options,job_type,short_job_type,True
@@ -203,15 +205,13 @@ if __name__=="__main__":
     jobTypeGroup.add_argument("--estimatePileup", action='store_true', help="Estimate pileup from minbias events")
     jobTypeGroup.add_argument("--mergePileup", action='store_true', help="Estimate pileup from minbias events")
     jobTypeGroup.add_argument('--addPileupToSignal', action="store_true", help='Add PU events to signal.')
-    jobTypeGroup.add_argument("--ntuple", action='store_true', help="Conversion to ntuple")
-    jobTypeGroup.add_argument("--pileup", action='store_true', help="Analyse min bias events for pile-up noise per cell")
-    jobTypeGroup.add_argument("--mergeMinBias", action='store_true', help="Merge min bias events for pile-up study")
     jobTypeGroup.add_argument("--trackerPerformance", action='store_true', help="Tracker-only performance studies")
     # Add noise on cluster level
     parser.add_argument("--noise", action='store_true', help="Add electronics noise")
     parser.add_argument("--addPileupNoise", action='store_true', help="Add pile-up noise in qudrature to electronics noise")
     parser.add_argument('--pileup', type=int,  required = '--mergePileup' in sys.argv or '--addPileupNoise' in sys.argv or '--addPileupToSignal' in sys.argv, help='Pileup')
     parser.add_argument("--tripletTracker", action="store_true", help="Use triplet tracker layout instead of baseline")
+    parser.add_argument('--newECalSegmentation', action='store_true', help="Use finer ECal segmentation in 2nd layer of deltaEta = 0.0025")
     default_options,job_type,short_job_type,sim = getJobInfo(sys.argv)
     parser.add_argument('--jobOptions', type=str, default = default_options, help='Name of the job options run by FCCSW (default config/geantSim.py')
 
@@ -285,6 +285,8 @@ if __name__=="__main__":
         print 'path_to_FCCSW: ',path_to_FCCSW
 
     version = args.version
+    if args.newECalSegmentation:
+        version = "v03_newECalSegmentation"
 
     print 'FCCSim version: ',version
     magnetic_field = not args.bFieldOff
@@ -293,7 +295,7 @@ if __name__=="__main__":
     num_jobs = args.numJobs
     job_options = args.jobOptions
     output_path = args.output
-    mu = args.pileupEvents
+    mu = args.pileup
 
     ## Use Pileup valid only in certain cases!
     if args.addPileupNoise: # pileup is used to specify level of the pileup noise
@@ -361,9 +363,7 @@ if __name__=="__main__":
         job_dir = os.path.join("singlePart", particle_human_names[pdg], b_field_str, eta_str, str(energy) + "GeV")
         if flat:
             job_dir = "singlePart/" + particle_human_names[pdg] + "/" + b_field_str + "/" + eta_str + "/flat/"
-            if sim:
-                job_options = "config/geantSim_fastBarrel.py"
-                print "FCCSW job options: ", job_options
+            print "FCCSW job options: ", job_options
 
     elif args.physics:
         print "=================================="
@@ -539,6 +539,8 @@ if __name__=="__main__":
             common_fccsw_command += ' --addElectronicsNoise'
         if flat:
             common_fccsw_command += ' --flat'
+            if args.newECalSegmentation:
+                common_fccsw_command += ' --newECalSegmentation'
         elif args.addPileupNoise:
             common_fccsw_command += ' --addPileupNoise --pileup ' + str(args.pileup)
         if args.calibrate:

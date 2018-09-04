@@ -22,6 +22,7 @@ singlePartGroup.add_argument('--phiMin', type=float, default=0, help='Minimal az
 singlePartGroup.add_argument('--phiMax', type=float, default=2*pi, help='Maximal azimuthal angle')
 singlePartGroup.add_argument('--particle', type=int, required='--singlePart' in sys.argv, help='Particle type (PDG)')
 singlePartGroup.add_argument('--flat', action='store_true', help='flat energy distribution for single particle generation')
+singlePartGroup.add_argument('--newECalSegmentation', action='store_true', help="Use finer ECal segmentation in 2nd layer of deltaEta = 0.0025")
 
 pythiaGroup = simparser.add_argument_group('Pythia','Common for min bias and LHE')
 pythiaGroup.add_argument('-c', '--card', type=str, default='Generation/data/Pythia_minbias_pp_100TeV.cmd', help='Path to Pythia card (default: PythiaCards/default.cmd)')
@@ -78,11 +79,14 @@ from GaudiKernel import SystemOfUnits as units
 #######                                         GEOMETRY                                         #############
 ##############################################################################################################
 path_to_detector = "/afs/cern.ch/work/c/cneubuse/public/FastSD/FCCSW/"
-detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
-                  path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
-                  path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
-                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
-                  ]
+detectors_to_use = [path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
+                    path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
+                    path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml',
+                    ]
+if simargs.newECalSegmentation:
+    detectors_to_use += [path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostatFineEta2ndLayer.xml']
+else:
+    detectors_to_use += [path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml']
 
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc", detectors = detectors_to_use, OutputLevel = WARNING)

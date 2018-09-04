@@ -11,7 +11,6 @@ class cleaner():
     def __init__(self, indir, yamldir, process, version):
         self.indir = indir+'/'+version+'/'+process
         self.yamldir = yamldir+'/'+version+'/'+process
-        self.yamlcheck = yamldir+version+'/check.yaml'
         self.process = process
 
 #__________________________________________________________
@@ -48,7 +47,6 @@ class cleaner():
                             cmd="rm %s/%s"%(self.yamldir,r.replace('.lhe.gz','.yaml').replace('.root','.yaml'))
                             os.system(cmd)
 
-                        ut.yamlstatus(self.yamlcheck,tmpf['merge']['process'] , False)
                     
                 except yaml.YAMLError as exc:
                     print(exc)

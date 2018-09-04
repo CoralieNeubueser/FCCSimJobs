@@ -317,6 +317,8 @@ for event in intree:
 
         if event.GetBranchStatus("TrackerPositionedHits"):
             for c in event.TrackerPositionedHits:
+                trackerBarrel_decoder.setValue(c.core.cellId)
+                trackerEndcap_decoder.setValue(c.core.cellId)
                 position = r.TVector3(c.position.x,c.position.y,c.position.z)
                 rec_ene.push_back(c.core.energy)
                 rec_eta.push_back(position.Eta())
@@ -324,27 +326,27 @@ for event in intree:
                 rec_pt.push_back(c.core.energy*position.Unit().Perp())
                 sysID = systemID(c.core.cellId)
                 if  sysID == 0 :
-                    rec_layer.push_back(trackerBarrel_decoder.get(c.core.cellId, "layer"))
+                    rec_layer.push_back(trackerBarrel_decoder["layer"])
                 elif sysID == 1 :
-                    rec_layer.push_back(trackerBarrel_decoder.get(c.core.cellId, "layer") + lastInnerTrackerBarrelLayer + 1)
+                    rec_layer.push_back(trackerBarrel_decoder["layer"] + lastInnerTrackerBarrelLayer + 1)
                 elif sysID == 2 :
-                    posneg = trackerEndcap_decoder.get(c.core.cellId, "posneg")
+                    posneg = trackerEndcap_decoder["posneg"]
                     if posneg == 0 :
-                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastOuterTrackerBarrelLayer + 1)
+                        rec_layer.push_back(trackerEndcap_decoder["disc"] + lastOuterTrackerBarrelLayer + 1)
                     else :
-                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastInnerTrackerPosECapLayer + 1)
+                        rec_layer.push_back(trackerEndcap_decoder["disc"] + lastInnerTrackerPosECapLayer + 1)
                 elif sysID == 3:
-                    posneg = trackerEndcap_decoder.get(c.core.cellId, "posneg")
+                    posneg = trackerEndcap_decoder["posneg"]
                     if posneg == 0 :
-                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastInnerTrackerNegECapLayer + 1)
+                        rec_layer.push_back(trackerEndcap_decoder["disc"] + lastInnerTrackerNegECapLayer + 1)
                     else :
-                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastOuterTrackerPosECapLayer + 1)
+                        rec_layer.push_back(trackerEndcap_decoder["disc"] + lastOuterTrackerPosECapLayer + 1)
                 else :
-                    posneg = trackerEndcap_decoder.get(c.core.cellId, "posneg")
+                    posneg = trackerEndcap_decoder["posneg"]
                     if posneg == 0 :
-                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastOuterTrackerNegECapLayer + 1)
+                        rec_layer.push_back(trackerEndcap_decoder["disc"] + lastOuterTrackerNegECapLayer + 1)
                     else :
-                        rec_layer.push_back(trackerEndcap_decoder.get(c.core.cellId, "disc") + lastFwdTrackerPosECapLayer + 1)
+                        rec_layer.push_back(trackerEndcap_decoder["disc"] + lastFwdTrackerPosECapLayer + 1)
                 rec_x.push_back(c.position.x/10.)
                 rec_y.push_back(c.position.y/10.)
                 rec_z.push_back(c.position.z/10.)

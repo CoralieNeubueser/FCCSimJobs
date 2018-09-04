@@ -12,6 +12,7 @@ if __name__=="__main__":
 
     jobTypeGroup = parser.add_mutually_exclusive_group(required = True) # Type of events to generate
     jobTypeGroup.add_argument("--check", action='store_true', help="run the jobchecker")
+    jobTypeGroup.add_argument("--checkeos", action='store_true', help="run the jobchecker for eos")
     jobTypeGroup.add_argument("--merge", action='store_true', help="merge the yaml for all the processes")
     jobTypeGroup.add_argument("--clean", action='store_true', help="clean the dictionnary and eos from bad jobs")
     jobTypeGroup.add_argument("--cleanold", action='store_true', help="clean the yaml from old jobs (more than 72 hours)")
@@ -31,6 +32,18 @@ if __name__=="__main__":
         print args.process
         checker=chky.checker_yaml(indir, '.root', args.process,  yamldir, args.version)
         checker.check(args.force, statfile)
+
+    elif args.checkeos:
+        print 'running the checkeos'
+        if args.process!='':
+            print 'using a specific process ',args.process
+        import checker_eos as chkeos
+        print args.process
+        indireos=indir+args.version
+        indirafs=yamldir+args.version
+        checkereos=chkeos.checker_eos(indirafs, indireos,  args.process)
+        checkereos.check()
+
 
     elif args.merge:
         print 'running the merger'

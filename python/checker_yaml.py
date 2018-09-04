@@ -21,7 +21,6 @@ class checker_yaml():
         self.yamldir = yamldir+self.version+'/'
         self.indir   = indir+self.version+'/'
         self.fext = fext
-        self.yamlcheck = yamldir+self.version+'/check.yaml'
         self.process = process
 
 #__________________________________________________________
@@ -108,8 +107,21 @@ class checker_yaml():
         for process in ldir:
             uid=process.replace(self.indir,"")
             if uid=="": continue
+            #print uid,'      ',self.process
             if self.process!='' and uid!=self.process: continue
-            #if ut.yamlcheck(self.yamlcheck, uid) and not force :continue
+
+            print '%s/%s/check'%(self.yamldir,uid)
+            if not ut.file_exist('%s/%s/check'%(self.yamldir,uid)) and not force: continue
+
+            psplit=process.split('/')
+            isana=False
+            for a in psplit:
+                if a=="ana":isana=True
+            if isana:
+                print 'is anana'
+                print process
+                continue
+
             All_files = glob.glob("%s/output_*.root"%(process))
             if len(All_files)==0:continue
 
@@ -168,7 +180,6 @@ class checker_yaml():
                     print 'not correct file extension %s'%self.fext
             
             if hasbeenchecked:
-                ut.yamlstatus(self.yamlcheck, uid, False)
                 cmdp='<pre>date=%s <span class="espace"/> time=%s <span class="espace"/> njobs=%i <span class="espace"/> nevents=%i <span class="espace"/> njobbad=%i <span class="espace"/> process=%s </pre>\n'%(ut.getdate_str(),ut.gettime_str() ,njobsdone_tot,nevents_tot,njobsbad_tot,uid)
                 stat_exist=ut.file_exist(statfile)
                 with open(statfile, "a") as myfile:

@@ -4,7 +4,7 @@ import re
 import yaml
 import utils as ut
 import users as us
-
+import glob
 class printer():
 
 #__________________________________________________________
@@ -14,7 +14,6 @@ class printer():
         self.outfile  = outfile
         self.eosdir = eosdir
         self.OutFile   = open(self.outfile, 'w')
-        self.yamlcheck = indir+version+'/check.yaml'
 
         self.tot_size=0
         self.ntot_events=0
@@ -60,7 +59,8 @@ class printer():
             sumw_tot=0
             nfileseos=0
             if files_tot+bad_tot!=0:
-                nfileseos=len(os.listdir('%s%s'%(self.eosdir,process)))
+                if ut.dir_exist('%s%s'%(self.eosdir,process)):
+                    nfileseos=len(glob.glob('%s%s/output*'%(self.eosdir,process)))
     
             print 'nevents               : %i'%events_tot
             print 'nfiles on eos/checked good/checked bad : %i/%i/%i'%(nfileseos,files_tot,bad_tot)
@@ -68,7 +68,6 @@ class printer():
             marked_e=''
 
             if nfileseos>files_tot+bad_tot:
-                ut.yamlstatus(self.yamlcheck, process, False)
                 marked_b='<h2><mark>'
                 marked_e='</mark></h2>'
 

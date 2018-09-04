@@ -5,6 +5,7 @@ simparser.add_argument("--bFieldOff", action='store_true', help="Switch OFF magn
 simparser.add_argument('-s','--seed', type=int, help='Seed for the random number generator', required=True)
 simparser.add_argument('-N','--numEvents', type=int, help='Number of simulation events to run', required=True)
 simparser.add_argument('--outName', type=str, help='Name of the output file', required=True)
+simparser.add_argument('--detectorPath', type=str, help='Path to detectors', default = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj")
 
 
 genTypeGroup = simparser.add_mutually_exclusive_group(required = True) # Type of events to generate
@@ -36,10 +37,12 @@ num_events = simargs.numEvents
 seed = simargs.seed
 output_name = simargs.outName
 flat = simargs.flat
+path_to_detector = simargs.detectorPath
 print "B field: ", magnetic_field
 print "number of events = ", num_events
 print "seed: ", seed
 print "output name: ", output_name
+print "detectors are taken from: ", path_to_detector
 if simargs.singlePart:
     energy = simargs.energy
     if simargs.flat:
@@ -77,7 +80,6 @@ from GaudiKernel import SystemOfUnits as units
 ##############################################################################################################
 #######                                         GEOMETRY                                         #############
 ##############################################################################################################
-path_to_detector = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj"
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
                   path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
@@ -99,9 +101,7 @@ ecalEndcapReadoutName = "EMECPhiEta"
 ecalFwdReadoutName = "EMFwdPhiEta"
 # HCAL readouts
 hcalBarrelReadoutName = "HCalBarrelReadout"
-hcalBarrelReadoutNamePhiEta = hcalBarrelReadoutName + "_phieta"
 hcalExtBarrelReadoutName = "HCalExtBarrelReadout"
-hcalExtBarrelReadoutNamePhiEta = hcalExtBarrelReadoutName + "_phieta"
 hcalEndcapReadoutName = "HECPhiEta"
 hcalFwdReadoutName = "HFwdPhiEta"
 # Tail Catcher readout
@@ -198,7 +198,7 @@ else:
     pythia8gen = GenAlg("Pythia8", SignalProvider=pythia8gentool, VertexSmearingTool=smeartool)
     pythia8gen.hepmc.Path = "hepmc"
     from Configurables import HepMCToEDMConverter
-    hepmc_converter = HepMCToEDMConverter("Converter")
+    hepmc_converter = HepMCToEDMConverter("Converter", hepmcStatusList=[]) # save all the particles from Pythia
     hepmc_converter.hepmc.Path="hepmc"
     hepmc_converter.genparticles.Path="allGenParticles"
     hepmc_converter.genvertices.Path="GenVertices"
@@ -222,7 +222,7 @@ else:
 from Configurables import CalibrateInLayersTool, CalibrateCaloHitsTool
 calibEcalBarrel = CalibrateInLayersTool("CalibrateEcalBarrel",
                                         # sampling fraction obtained using SamplingFractionInLayers from DetStudies package
-                                        samplingFraction = [0.12125] + [0.14283] + [0.16354] + [0.17662] + [0.18867] + [0.19890] + [0.20637] + [0.20802],
+                                        samplingFraction = [0.299041341789] + [0.1306220735]+ [0.163243999965]  + [0.186360269398] + [0.203778124831] + [0.216211280314] + [0.227140796653] + [0.243315422934],
                                         readoutName = ecalBarrelReadoutName,
                                         layerFieldName = "layer")
 calibHcells = CalibrateCaloHitsTool("CalibrateHCal", invSamplingFraction="41.66")

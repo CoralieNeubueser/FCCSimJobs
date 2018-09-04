@@ -8,7 +8,6 @@ class merger():
 #__________________________________________________________
     def __init__(self, process, yamldir, version):
         self.indir = yamldir+version
-        self.yamlcheck = yamldir+version+'/check.yaml'
         self.process = process
 #__________________________________________________________
     def merge(self, force):
@@ -36,7 +35,9 @@ class merger():
                 continue
 
             #continue if process has been checked
-            if ut.yamlcheck(self.yamlcheck, process) and not force:continue
+            print '%s/check'%(l)
+            if not ut.file_exist('%s/check'%(l)) and not force: continue
+
 
             print 'merging %i files in directory %s'%(len(All_files), l)
             for f in All_files:
@@ -46,7 +47,11 @@ class merger():
                 
                 with open(f, 'r') as stream:
                     try:
-                        tmpf = yaml.load(stream)
+                        tmpf = yaml.load(stream) 
+                        if ut.getsize(f)==0: 
+                            os.system("rm %s"%(f))
+                            continue
+                        if ut.getsize(f)==0: continue
                         if tmpf['processing']['status']=='sending': continue
                         if tmpf['processing']['status']=='BAD':
                             nbad+=1
@@ -79,12 +84,15 @@ class merger():
                     'users':users
                     }
                    }
-            with open(outfile, 'w') as outyaml:
-                yaml.dump(dic, outyaml, default_flow_style=False) 
-                
-            if ndone+nbad==len(All_files):
-                ut.yamlstatus(self.yamlcheck, process, True)
-                print 'merged, status true ndone/nbad/ntot %i/%i/%i'%(ndone,nbad,len(All_files))
-            else:
-                ut.yamlstatus(self.yamlcheck, process, False)
-                print 'not merged, status false ndone/nbad/ntot %i/%i/%i'%(ndone,nbad,len(All_files))
+            try:
+                with open(outfile, 'w') as outyaml:
+                    yaml.dump(dic, outyaml, default_flow_style=False) 
+            except IOError as exc:
+                print "I/O error({0}): {1}".format(exc.errno, exc.strerror)
+                print "outfile ",outfile
+                import time
+                time.sleep(10)
+                with open(outfile, 'w') as outyaml:
+                    yaml.dump(dic, outyaml, default_flow_style=False)
+
+

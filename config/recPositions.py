@@ -5,6 +5,8 @@ simparser.add_argument('--inName', type=str, help='Name of the input file', requ
 simparser.add_argument('--outName', type=str, help='Name of the output file', required=True)
 simparser.add_argument('-N','--numEvents',  type=int, help='Number of simulation events to run', required=True)
 simparser.add_argument('--flat', action='store_true', help='flat energy distribution for single particle generation')
+simparser.add_argument('--prefixCollections', type=str, help='Prefix added to the collection names', default="")
+simparser.add_argument("--addMuons", action='store_true', help="Add tail catcher cells", default = False)
 
 simargs, _ = simparser.parse_known_args()
 
@@ -14,10 +16,13 @@ print "=================================="
 num_events = simargs.numEvents
 input_name = simargs.inName
 output_name = simargs.outName
+prefix = simargs.prefixCollections
+addMuons = simargs.addMuons
 print "number of events = ", num_events
 print "input name: ", input_name
 print "output name: ", output_name
 print "reco Barrel only:  ", simargs.flat
+print "prefix added to the collections' name: ", prefix
 
 from Gaudi.Configuration import *
 ##############################################################################################################
@@ -62,28 +67,22 @@ hcalCellCollection = "HCalBarrelCells"
 from Configurables import ApplicationMgr, FCCDataSvc, PodioInput, PodioOutput
 podioevent = FCCDataSvc("EventDataSvc", input=input_name)
 
-inputCollections = ["ECalBarrelCells", "HCalBarrelCells", "HCalExtBarrelCells", "ECalEndcapCells", "HCalEndcapCells", "ECalFwdCells", "HCalFwdCells", "TailCatcherCells","GenParticles","GenVertices"]
+coll_names_read = [prefix+"ECalBarrelCells", prefix+"HCalBarrelCells", prefix+"HCalExtBarrelCells", prefix+"ECalEndcapCells", prefix+"HCalEndcapCells", prefix+"ECalFwdCells", prefix+"HCalFwdCells"]
 
-if simargs.flat:
-    inputCollections = ["ECalBarrelCells", "HCalBarrelCells"]
+if addMuons:
+    coll_names_read += ["TailCatcherCells"]
 
-podioinput = PodioInput("PodioReader", collections = inputCollections, OutputLevel = DEBUG)
+elif simargs.flat:
+    coll_names_read= ["ECalBarrelCells", "HCalBarrelCells"]
 
-##############################################################################################################                                                                                                                                
-#######                                       RECALIBRATE ECAL                                   #############                                                                                                                                
-##############################################################################################################                                                                                                                                
+if not prefix:
+    coll_names_read += ["GenParticles", "GenVertices"]
 
-from Configurables import CalibrateInLayersTool, CreateCaloCells
-recalibEcalBarrel = CalibrateInLayersTool("RecalibrateEcalBarrel",
-                                          samplingFraction = [0.299654475899/0.12125] + [0.148166996525/0.14283] + [0.163005489744/0.16354] + [0.176907220821/0.17662] + [0.189980731321/0.18867] + [0.202201963561/0.19890] + [0.214090761907/0.20637] + [0.224706564289/0.20802],
-                                          readoutName = ecalBarrelReadoutName,
-                                          layerFieldName = "layer")
-recreateEcalBarrelCells = CreateCaloCells("redoEcalBarrelCells",
-                                          doCellCalibration=True,
-                                          calibTool=recalibEcalBarrel, recalibrateBaseline =False,
-                                          addCellNoise=False, filterCellNoise=False)
-recreateEcalBarrelCells.hits.Path="ECalBarrelCells"
-recreateEcalBarrelCells.cells.Path="ECalBarrelCellsRedo"
+podioinput = PodioInput("PodioReader", collections = coll_names_read, OutputLevel = DEBUG)
+
+##############################################################################################################
+#######                                       RECALIBRATE ECAL                                   #############
+##############################################################################################################
 
 from Configurables import RewriteBitfield
 rewriteECalEC = RewriteBitfield("RewriteECalEC",
@@ -95,7 +94,7 @@ rewriteECalEC = RewriteBitfield("RewriteECalEC",
                                 newReadoutName = ecalEndcapReadoutName,
                                 debugPrint = 10)
 # clusters are needed, with deposit position and cellID in bits
-rewriteECalEC.inhits.Path = "ECalEndcapCells"
+rewriteECalEC.inhits.Path = prefix+"ECalEndcapCells"
 rewriteECalEC.outhits.Path = "newECalEndcapCells"
 
 rewriteHCalEC = RewriteBitfield("RewriteHCalEC",
@@ -107,48 +106,7 @@ rewriteHCalEC = RewriteBitfield("RewriteHCalEC",
                                 newReadoutName = hcalEndcapReadoutName,
                                 debugPrint = 10)
 # clusters are needed, with deposit position and cellID in bits
-rewriteHCalEC.inhits.Path = "HCalEndcapCells"
-rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
-
-##############################################################################################################                                                                                                                                
-#######                                       RECALIBRATE ECAL                                   #############                                                                                                                                
-##############################################################################################################                                                                                                                                
-
-from Configurables import CalibrateInLayersTool, CreateCaloCells
-recalibEcalBarrel = CalibrateInLayersTool("RecalibrateEcalBarrel",
-                                          samplingFraction = [0.299654475899/0.12125] + [0.148166996525/0.14283] + [0.163005489744/0.16354] + [0.176907220821/0.17662] + [0.189980731321/0.18867] + [0.202201963561/0.19890] + [0.214090761907/0.20637] + [0.224706564289/0.20802],
-                                          readoutName = ecalBarrelReadoutName,
-                                          layerFieldName = "layer")
-recreateEcalBarrelCells = CreateCaloCells("redoEcalBarrelCells",
-                                          doCellCalibration=True,
-                                          calibTool=recalibEcalBarrel,
-                                          addCellNoise=False, filterCellNoise=False)
-recreateEcalBarrelCells.hits.Path="ECalBarrelCells"
-recreateEcalBarrelCells.cells.Path="ECalBarrelCellsRedo"
-
-from Configurables import RewriteBitfield
-rewriteECalEC = RewriteBitfield("RewriteECalEC",
-                                # old bitfield (readout)
-                                oldReadoutName = "EMECPhiEta",
-                                # specify which fields are going to be deleted
-                                removeIds = ["sublayer"],
-                                # new bitfield (readout), with new segmentation
-                                newReadoutName = ecalEndcapReadoutName,
-                                debugPrint = 10)
-# clusters are needed, with deposit position and cellID in bits
-rewriteECalEC.inhits.Path = "ECalEndcapCells"
-rewriteECalEC.outhits.Path = "newECalEndcapCells"
-
-rewriteHCalEC = RewriteBitfield("RewriteHCalEC",
-                                # old bitfield (readout)
-                                oldReadoutName = "HECPhiEta",
-                                # specify which fields are going to be deleted
-                                removeIds = ["sublayer"],
-                                # new bitfield (readout), with new segmentation
-                                newReadoutName = hcalEndcapReadoutName,
-                                debugPrint = 10)
-# clusters are needed, with deposit position and cellID in bits
-rewriteHCalEC.inhits.Path = "HCalEndcapCells"
+rewriteHCalEC.inhits.Path = prefix+"HCalEndcapCells"
 rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
 
 ##############################################################################################################
@@ -156,66 +114,84 @@ rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
 ##############################################################################################################
 
 #Configure tools for calo cell positions
-from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool, CellPositionsTailCatcherTool 
-ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel", 
-                                    readoutName = ecalBarrelReadoutName)
-HCalBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrel", 
-                                              readoutName = hcalBarrelReadoutName)
-if not simargs.flat:
-    EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC", 
-                                           readoutName = ecalEndcapReadoutName)
-    ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd", 
-                                              readoutName = ecalFwdReadoutName)
-    HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel", 
-                                                     readoutName = hcalExtBarrelReadoutName)
-    HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC", 
-                                          readoutName = hcalEndcapReadoutName)
-    HCalFwdcells = CellPositionsCaloDiscsTool("CellPositionsHCalFwd", 
-                                              readoutName = hcalFwdReadoutName)
-    TailCatchercells = CellPositionsTailCatcherTool("CellPositionsTailCatcher", 
-                                                    readoutName = tailCatcherReadoutName, 
-                                                    centralRadius = 901.5)
+from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool
+ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel",
+                                    readoutName = ecalBarrelReadoutName,
+                                    OutputLevel = INFO)
+EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC",
+                                    readoutName = ecalEndcapReadoutName,
+                                    OutputLevel = DEBUG)
+ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd",
+                                        readoutName = ecalFwdReadoutName,
+                                        OutputLevel = INFO)
+HCalBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrel",
+                                              readoutName = hcalBarrelReadoutName,
+                                              OutputLevel = INFO)
+HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel",
+                                                 readoutName = hcalExtBarrelReadoutName,
+                                                 OutputLevel = INFO)
+HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC",
+                                   readoutName = hcalEndcapReadoutName,
+                                   OutputLevel = INFO)
+HCalFwdcells = CellPositionsCaloDiscsTool("CellPositionsHCalFwd",
+                                        readoutName = hcalFwdReadoutName,
+                                        OutputLevel = INFO)
+if addMuons:
+    from Configurables import CellPositionsTailCatcherTool
+    TailCatchercells = CellPositionsTailCatcherTool("CellPositionsTailCatcher",
+                                                    readoutName = tailCatcherReadoutName,
+                                                    centralRadius = 901.5,
+                                                    OutputLevel = INFO)
 
 # cell positions
 from Configurables import CreateCellPositions
-positionsEcalBarrel = CreateCellPositions("positionsEcalBarrel", 
-                                          positionsTool=ECalBcells, 
-                                          hits = "ECalBarrelCellsRedo", 
-                                          positionedHits = "ECalBarrelCellPositions")
-positionsHcalBarrel = CreateCellPositions("positionsHcalBarrel", 
-                                          positionsTool=HCalBcells, 
-                                          hits = "HCalBarrelCells", 
-                                          positionedHits = "HCalBarrelCellPositions")
-
-if not simargs.flat:
-    positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel", 
-                                                 positionsTool=HCalExtBcells, 
-                                                 hits = "HCalExtBarrelCells", 
-                                                 positionedHits = "HCalExtBarrelCellPositions")
-    positionsEcalEndcap = CreateCellPositions("positionsEcalEndcap", 
-                                              positionsTool=EMECcells, 
-                                              hits = "newECalEndcapCells", 
-                                              positionedHits = "ECalEndcapCellPositions")
-    positionsHcalEndcap = CreateCellPositions("positionsHcalEndcap", 
-                                              positionsTool=HECcells, 
-                                              hits = "newHCalEndcapCells", 
-                                              positionedHits = "HCalEndcapCellPositions")
-    positionsEcalFwd = CreateCellPositions("positionsEcalFwd", 
-                                           positionsTool=ECalFwdcells, 
-                                           hits = "ECalFwdCells", 
-                                           positionedHits = "ECalFwdCellPositions")
-    positionsHcalFwd = CreateCellPositions("positionsHcalFwd", 
-                                           positionsTool=HCalFwdcells, 
-                                           hits = "HCalFwdCells", 
-                                           positionedHits = "HCalFwdCellPositions")
-    positionsTailCatcher = CreateCellPositions("positionsTailCatcher", 
-                                               positionsTool=TailCatchercells, 
-                                               hits = "TailCatcherCells", 
-                                               positionedHits = "TailCatcherCellPositions")
+positionsEcalBarrel = CreateCellPositions("positionsEcalBarrel",
+                                          positionsTool=ECalBcells,
+                                          hits = prefix+"ECalBarrelCells",
+                                          positionedHits = "ECalBarrelCellPositions",
+                                          OutputLevel = INFO)
+positionsHcalBarrel = CreateCellPositions("positionsHcalBarrel",
+                                          positionsTool=HCalBcells,
+                                          hits = prefix+"HCalBarrelCells",
+                                          positionedHits = "HCalBarrelCellPositions",
+                                          OutputLevel = INFO)
+positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel",
+                                          positionsTool=HCalExtBcells,
+                                          hits = prefix+"HCalExtBarrelCells",
+                                          positionedHits = "HCalExtBarrelCellPositions",
+                                          OutputLevel = INFO)
+positionsEcalEndcap = CreateCellPositions("positionsEcalEndcap",
+                                          positionsTool=EMECcells,
+                                          hits = "newECalEndcapCells",
+                                          positionedHits = "ECalEndcapCellPositions",
+                                          OutputLevel = INFO)
+positionsHcalEndcap = CreateCellPositions("positionsHcalEndcap",
+                                          positionsTool=HECcells,
+                                          hits = "newHCalEndcapCells",
+                                          positionedHits = "HCalEndcapCellPositions",
+                                          OutputLevel = INFO)
+positionsEcalFwd = CreateCellPositions("positionsEcalFwd",
+                                          positionsTool=ECalFwdcells,
+                                          hits = prefix+"ECalFwdCells",
+                                          positionedHits = "ECalFwdCellPositions",
+                                          OutputLevel = INFO)
+positionsHcalFwd = CreateCellPositions("positionsHcalFwd",
+                                          positionsTool=HCalFwdcells,
+                                          hits = prefix+"HCalFwdCells",
+                                          positionedHits = "HCalFwdCellPositions",
+                                          OutputLevel = INFO)
+if addMuons:
+    positionsTailCatcher = CreateCellPositions("positionsTailCatcher",
+                                               positionsTool=TailCatchercells,
+                                               hits = "TailCatcherCells",
+                                               positionedHits = "TailCatcherCellPositions",
+                                               OutputLevel = INFO)
 
 # PODIO algorithm
 out = PodioOutput("out", OutputLevel=DEBUG)
-out.outputCommands = ["keep *","drop ECalBarrelCells","drop ECalEndcapCells","drop ECalFwdCells","drop HCalBarrelCells", "drop HCalExtBarrelCells", "drop HCalEndcapCells", "drop HCalFwdCells", "drop TailCatcherCells"]
+out.outputCommands = ["keep *","drop "+prefix+"ECalBarrelCells","drop "+prefix+"ECalEndcapCells","drop "+prefix+"ECalFwdCells","drop "+prefix+"HCalBarrelCells", "drop "+prefix+"HCalExtBarrelCells", "drop "+prefix+"HCalEndcapCells", "drop "+prefix+"HCalFwdCells"]
+if addMuons:
+    out.outputCommands += ["drop TailCatcherCells"]
 out.filename = "edm.root"
 
 #CPU information
@@ -224,28 +200,34 @@ chra = ChronoAuditor()
 audsvc = AuditorSvc()
 audsvc.Auditors = [chra]
 podioinput.AuditExecute = True
-recreateEcalBarrelCells.AuditExecute = True
 positionsEcalBarrel.AuditExecute = True
 positionsHcalBarrel.AuditExecute = True
+positionsHcalExtBarrel.AuditExecute = True
+positionsHcalEndcap.AuditExecute = True
+positionsHcalFwd.AuditExecute = True
+if addMuons:
+    positionsTailCatcher.AuditExecute = True
 out.AuditExecute = True
 
 list_of_algorithms = [podioinput,
-                      recreateEcalBarrelCells,
                       positionsEcalBarrel,
-                      positionsHcalBarrel]
- 
+                      positionsHcalBarrel,
+                      ]
 if not simargs.flat:
-    list_of_algorithms += [ rewriteECalEC,
-                            rewriteHCalEC,
-                            positionsEcalEndcap,
-                            positionsEcalFwd, 
-                            positionsHcalExtBarrel, 
-                            positionsHcalEndcap, 
-                            positionsHcalFwd,
-                            positionsTailCatcher,
-                            out]
-else:
-    list_of_algorithms += [out]
+    list_of_algorithms += [ 
+        rewriteECalEC,
+        rewriteHCalEC,
+        positionsEcalEndcap,
+        positionsEcalFwd,
+        positionsHcalExtBarrel,
+        positionsHcalEndcap,
+        positionsHcalFwd
+        ]
+    
+    if addMuons:
+        list_of_algorithms += [positionsTailCatcher]
+
+list_of_algorithms += [out]
 
 ApplicationMgr(
     TopAlg = list_of_algorithms,

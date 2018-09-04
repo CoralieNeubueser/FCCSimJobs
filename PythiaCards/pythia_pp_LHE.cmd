@@ -20,6 +20,10 @@ ParticleDecays:zMax = 30000        ! mm, (full extent of beampipe)
 ! 4) Read-in Les Houches Event file - alternative beam and process selection.
 Beams:frameType = 4                ! read info from a LHEF
 
+25:onMode = off
+24:onMode = off
+23:onMode = off
+
 25:onIfAny = 5
 24:onIfAny = 1 2 3 4
 23:onIfAny = 1 2 3 4 5

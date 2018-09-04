@@ -21,7 +21,7 @@ if __name__=="__main__":
 
     parser.add_argument('-p','--process', type=str, help='Name of the process to use to send jobs or for the check', default='')
     parser.add_argument('--force', action='store_true', help='Force the type of process', default=False)
-    parser.add_argument('--version', type=str, help='Version to use', choices = ['v01', 'v02_pre', 'v02', 'v03'])
+    parser.add_argument('--version', type=str, help='Version to use', choices = ['v01', 'v02_pre', 'v02', 'v03', 'v03_ecal'])
     args, _ = parser.parse_known_args()
 
     if args.check:

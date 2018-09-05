@@ -68,6 +68,16 @@ The default FCC Software verson is 0.9.1 taken from
    - the cell positions reconstruction is running only on local SW installation (/afs/cern.ch/work/c/cneubuse/public/TopoClusters/FCCSW/), to use this add **--local inits/reco.py**
    - the topo-clusters reconstruction is running only on local SW installation (/afs/cern.ch/work/c/cneubuse/public/TopoClusters/FCCSW/), to use this add **--local inits/reco.py**
 
+To run with the ECal granularity in the 2nd layer to be #Delta#eta=0.0025, use flag **--newECalSegmentation** the version is automatically set to "v03_newECalSegmentation", thus the files will be stored in /v03_newECalSegmentation/.
+
+Example simulation:
+```
+python send.py --singlePart --particle 11 -e 0 --flat -n 100 -N 1 --condor --etaMin 3.6 --etaMax 3.6 --phiMax 0 --newECalSegmentation
+```
+
+To run the reco on top, simply add the --recPositions flag, the default converter is set to be: python/Converter_Jan.py.
+
+
 Running examples
 ================
 

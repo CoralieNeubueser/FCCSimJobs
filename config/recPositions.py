@@ -9,6 +9,7 @@ simparser.add_argument('--prefixCollections', type=str, help='Prefix added to th
 simparser.add_argument("--addMuons", action='store_true', help="Add tail catcher cells", default = False)
 simparser.add_argument("--resegmentHCal", action='store_true', help="Merge HCal cells in DeltaEta=0.025 bins", default = False)
 simparser.add_argument('--detectorPath', type=str, help='Path to detectors', default = "/cvmfs/fcc.cern.ch/sw/releases/0.9.1/x86_64-slc6-gcc62-opt/linux-scientificcernslc6-x86_64/gcc-6.2.0/fccsw-0.9.1-c5dqdyv4gt5smfxxwoluqj2pjrdqvjuj")
+simparser.add_argument('--newECalSegmentation', action='store_true', help="Use finer ECal segmentation in 2nd layer of deltaEta = 0.0025")
 
 simargs, _ = simparser.parse_known_args()
 
@@ -36,8 +37,13 @@ from Gaudi.Configuration import *
 ##############################################################################################################
 detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
                   path_to_detector+'/Detector/DetFCChhTrackerTkLayout/compact/Tracker.xml',
-                  path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
                   path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml']
+
+if simargs.newECalSegmentation:
+    detectors_to_use += [path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostatFineEta2ndLayer.xml']
+else:
+    detectors_to_use += [path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml']
+
 if not simargs.flat:
     detectors_to_use += [path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalExtendedBarrel_TileCal.xml',
                          path_to_detector+'/Detector/DetFCChhCalDiscs/compact/Endcaps_coneCryo.xml',

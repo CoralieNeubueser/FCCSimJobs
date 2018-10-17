@@ -81,6 +81,12 @@ def getJobInfo(argv):
         if '--resegmentHCal' in argv:
             job_type = "ntup/resegmentedHCal/positions"
             short_job_type += "_resegmHCal"
+        if '--hcalOnly' in argv:
+            short_job_type += "_hcalOnly"
+            if '--fullSteel' in argv:
+                short_job_type += "_fullSteel"
+            elif '--fullLead' in argv:
+                short_job_type += "_fullLead"
         return default_options,job_type,short_job_type,False
 
     elif '--recSlidingWindow' in argv:
@@ -150,14 +156,17 @@ def getJobInfo(argv):
 
     else:
         default_options = 'config/geantSim.py'
-        if '--hcalOnly' in argv:
-            default_options = 'config/geantSim_hcalOnly.py'
-            if '--fullSteel' in argv:
-                default_options = 'config/geantSim_hcalOnly_steel.py'
-            elif '--fullLead' in argv:
-                default_options = 'config/geantSim_hcalOnly_lead.py'
         job_type = "simu"
         short_job_type = "sim"
+        if '--hcalOnly' in argv:
+            default_options = 'config/geantSim_hcalOnly.py'
+            short_job_type += "_hcalOnly"
+            if '--fullSteel' in argv:
+                default_options = 'config/geantSim_hcalOnly_steel.py'
+                short_job_type += "_fullSteel"
+            elif '--fullLead' in argv:
+                default_options = 'config/geantSim_hcalOnly_lead.py'
+                short_job_type += "_fullLead"
         return default_options,job_type,short_job_type,True
 
 

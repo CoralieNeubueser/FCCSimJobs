@@ -47,7 +47,13 @@ print "calibrate clusters: ", calib
 print "resegment HCal: ", resegmentHCal
 print "no B field: ", bFieldOff
 
-# Paramerters for cluster calibration                                                                                                                                                                             
+# correct EM calibration of hcal cells
+hadronSampl_hcal = 0.024
+emSampl_hcal = 0.0255
+if bFieldOff:
+    emSampl_hcal = 0.0249
+
+# Paramerters for cluster calibration                                                                                                                                                   
 benchmark_a = 1.07
 benchmark_b = 0.76
 benchmark_c = -1.9E-5
@@ -318,6 +324,8 @@ if elNoise and not puNoise:
                                              addPileup = False,
                                              numRadialLayers = 8)
 
+    calibHcells = CalibrateCaloHitsTool("CalibrateHCal", invSamplingFraction= str(hadronSampl_hcal/emSampl_hcal))
+
     createEcalBarrelCellsNoise = CreateCaloCells("CreateECalBarrelCellsNoise",
                                                  geometryTool = barrelEcalGeometry,
                                                  doCellCalibration=False, recalibrateBaseline =False, # already calibrated
@@ -327,21 +335,23 @@ if elNoise and not puNoise:
                                                  cells = "ECalBarrelCellsNoise")
 
     # HCal Barrel noise
-    noiseHcal = NoiseCaloCellsFlatTool("HCalNoise", cellNoise = 0.009)
+    noiseHcal = NoiseCaloCellsFlatTool("HCalNoise", cellNoise = 0.01)
     
     if resegmentHCal:
         createHcalBarrelCellsNoise = CreateCaloCells("CreateHCalBarrelCellsNoise",
                                                      geometryTool = barrelHcalGeometry,
-                                                     doCellCalibration = False, recalibrateBaseline =False,
+                                                     doCellCalibration = True, recalibrateBaseline =False,
                                                      addCellNoise = True, filterCellNoise = False,
+                                                     calibTool = calibHcells,
                                                      noiseTool = noiseHcal)
         createHcalBarrelCellsNoise.hits.Path = inputTopoCellCollectionHCalBarrel
         createHcalBarrelCellsNoise.cells.Path = "HCalBarrelCellsNoise"
     else:
         createHcalBarrelCellsNoise = CreateCaloCells("CreateHCalBarrelCellsNoise",
                                                      geometryTool = hcalgeo,
-                                                     doCellCalibration = False, recalibrateBaseline =False,
+                                                     doCellCalibration = True, recalibrateBaseline =False,
                                                      addCellNoise = True, filterCellNoise = False,
+                                                     calibTool = calibHcells,
                                                      noiseTool = noiseHcal)
         createHcalBarrelCellsNoise.hits.Path = inputTopoCellCollectionHCalBarrel
         createHcalBarrelCellsNoise.cells.Path = "HCalBarrelCellsNoise"

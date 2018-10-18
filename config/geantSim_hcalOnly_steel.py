@@ -224,7 +224,7 @@ from Configurables import CreateCaloCells
 # -> ECal barrel
 # 1. step - merge hits into cells with default Eta segmentation
 createEcalBarrelCellsStep1 = CreateCaloCells("EcalBarrelCellsStep1",
-                                             doCellCalibration=True,
+                                             doCellCalibration=True, recalibrateBaseline =False,
                                              calibTool=calibEcalBarrel,
                                              addCellNoise=False, filterCellNoise=False)
 createEcalBarrelCellsStep1.hits.Path="ECalBarrelHits"
@@ -245,7 +245,7 @@ resegmentEcalBarrel = RedoSegmentation("ReSegmentationEcalBarrel",
                                        outhits = "ECalBarrelCellsStep2")
 # 3. step - merge cells in the same phi bin
 createEcalBarrelCells = CreateCaloCells("CreateECalBarrelCells",
-                                        doCellCalibration=False, # already calibrated in step 1
+                                        doCellCalibration=False, recalibrateBaseline =False,# already calibrated in step 1
                                         addCellNoise=False, filterCellNoise=False,
                                         hits="ECalBarrelCellsStep2",
                                         cells="ECalBarrelCells")
@@ -266,14 +266,14 @@ mergeLayersEcalEndcap = MergeLayers("MergeLayersEcalEndcap",
 mergeLayersEcalEndcap.inhits.Path = "ECalEndcapHits"
 mergeLayersEcalEndcap.outhits.Path = "mergedECalEndcapHits"
 createEcalEndcapCells = CreateCaloCells("CreateEcalEndcapCells",
-                                        doCellCalibration=True,
+                                        doCellCalibration=True, recalibrateBaseline =False,
                                         calibTool=calibEcalEndcap,
                                         addCellNoise=False, filterCellNoise=False)
 createEcalEndcapCells.hits.Path="mergedECalEndcapHits"
 createEcalEndcapCells.cells.Path="ECalEndcapCells"
 # -> Ecal forward
 createEcalFwdCells = CreateCaloCells("CreateEcalFwdCells",
-                                     doCellCalibration=True,
+                                     doCellCalibration=True, recalibrateBaseline =False,
                                      calibTool=calibEcalFwd,
                                      addCellNoise=False, filterCellNoise=False)
 createEcalFwdCells.hits.Path="ECalFwdHits"
@@ -281,7 +281,7 @@ createEcalFwdCells.cells.Path="ECalFwdCells"
 
 # -> Hcal barrel
 createHcalCells = CreateCaloCells("CreateHCalBarrelCells",
-                                  doCellCalibration=True,
+                                  doCellCalibration=True, recalibrateBaseline =False,
                                   calibTool=calibHcells,
                                   addCellNoise = False, filterCellNoise = False,
                                   hits="HCalBarrelHits",
@@ -289,7 +289,7 @@ createHcalCells = CreateCaloCells("CreateHCalBarrelCells",
 
 # -> Hcal extended barrel
 createExtHcalCells = CreateCaloCells("CreateExtHcalCaloCells",
-                                     doCellCalibration=True,
+                                     doCellCalibration=True, recalibrateBaseline =False,
                                      calibTool=calibHcells,
                                      addCellNoise = False, filterCellNoise = False,
                                      hits="HCalExtBarrelHits",
@@ -310,21 +310,21 @@ mergeLayersHcalEndcap = MergeLayers("MergeLayersHcalEndcap",
 mergeLayersHcalEndcap.inhits.Path = "HCalEndcapHits"
 mergeLayersHcalEndcap.outhits.Path = "mergedHCalEndcapHits"
 createHcalEndcapCells = CreateCaloCells("CreateHcalEndcapCells",
-                                        doCellCalibration=True,
+                                        doCellCalibration=True, recalibrateBaseline =False,
                                         calibTool=calibHcalEndcap,
                                         addCellNoise=False, filterCellNoise=False)
 createHcalEndcapCells.hits.Path="mergedHCalEndcapHits"
 createHcalEndcapCells.cells.Path="HCalEndcapCells"
 # -> Hcal forward 
 createHcalFwdCells = CreateCaloCells("CreateHcalFwdCaloCells",
-                                     doCellCalibration=True,
+                                     doCellCalibration=True, recalibrateBaseline =False,
                                      calibTool=calibHcalFwd,
                                      addCellNoise=False, filterCellNoise=False)
 createHcalFwdCells.hits.Path="HCalFwdHits"
 createHcalFwdCells.cells.Path="HCalFwdCells"
 # -> Tail Catcher
 createTailCatcherCells = CreateCaloCells("CreateTailCatcherCells",
-                                         doCellCalibration=False,
+                                         doCellCalibration=False, recalibrateBaseline =False,
                                          addCellNoise = False, filterCellNoise = False,
                                          OutputLevel = INFO,
                                          hits="TailCatcherHits",

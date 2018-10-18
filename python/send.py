@@ -76,11 +76,17 @@ def takeOnlyNonexistingFiles(files, output):
 def getJobInfo(argv):
     if '--recPositions' in argv:
         default_options = 'config/recPositions.py'
-        job_type = "ntup/positions"
+        job_type = "ntup/positions/"
         short_job_type = "recPos"
         if '--resegmentHCal' in argv:
-            job_type = "ntup/resegmentedHCal/positions"
+            job_type += "resegmentedHCal/"
             short_job_type += "_resegmHCal"
+        if '--noise' in argv:
+            job_type += "electronicsNoise/"
+            short_job_type += "_addNoise"        
+        if '--jan' in argv:
+            job_type += "jan/"
+            short_job_type += "_jan"    
         return default_options,job_type,short_job_type,False
 
     elif '--recSlidingWindow' in argv:
@@ -241,6 +247,7 @@ if __name__=="__main__":
 
     recoPositionsGroup = parser.add_argument_group('RecoPositions','Cell positions reconstruction')
     recoPositionsGroup.add_argument('--resegmentHCal', action='store_true', help="Resegment HCal cells to deltaEta = 0.025")
+    recoPositionsGroup.add_argument('--jan', action='store_true', help="write out the ntup for jan")
 
     recoSlidingWinGroup = parser.add_argument_group('RecoSlidingWindow','Sliding window reconstruction')
     recoSlidingWinGroup.add_argument('--winEta', type=int, default=7, help='Size of the final cluster in eta')
@@ -625,10 +632,15 @@ if __name__=="__main__":
             else:
                 frun.write('%s --inName %s\n'%(common_fccsw_command, input_files[i]))
         if args.recPositions:
-            if args.resegmentHCal:
-                frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s --resegmentedHCal \n'%(current_dir,outfile))
-            else:
+            if args.jan and args.resegmentHCal:
+                frun.write('python %s/python/Convert_Jan.py edm.root $JOBDIR/%s --resegmentedHCal \n'%(current_dir,outfile))
+            elif args.jan and not args.resegmentHCal:
                 frun.write('python %s/python/Convert_Jan.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
+            else:
+                if args.resegmentHCal:
+                    frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s --resegmentedHCal \n'%(current_dir,outfile))
+                else:
+                    frun.write('python %s/python/Convert.py edm.root $JOBDIR/%s\n'%(current_dir,outfile))
             frun.write('rm edm.root \n')
         elif args.recTopoClusters or args.recSlidingWindow:
             if args.resegmentHCal:

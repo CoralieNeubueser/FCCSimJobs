@@ -335,7 +335,7 @@ positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel",
                                           OutputLevel = INFO)
 positionsHcalSegBarrel = CreateCellPositions("positionsSegHcalBarrel",
                                           positionsTool=HCalBsegcells,
-                                          hits = "newHCalBarrelCells",
+                                          hits = hcalBarrelCellsForPositions,
                                           positionedHits = "HCalBarrelCellPositions",
                                           OutputLevel = INFO)
 positionsHcalSegExtBarrel = CreateCellPositions("positionsSegHcalExtBarrel",
@@ -410,9 +410,6 @@ elif resegmentHCal and noise:
         posHcalBarrel,
         resegmentHcalBarrel,
         createHcalBarrelCells,
-        ]
-if noise and resegmentHCal:
-    list_of_algorithms += [
         createEcalBarrelCellsNoise,
         createHcalBarrelCellsNoise,
         positionsEcalBarrel,
@@ -425,6 +422,7 @@ elif noise and not resegmentHCal:
         positionsEcalBarrel,
         positionsHcalBarrel,
         ]
+
 elif not noise and not simargs.flat:
     list_of_algorithms += [rewriteECalEC,
                            rewriteHCalEC,

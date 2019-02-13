@@ -87,6 +87,8 @@ def getJobInfo(argv):
                 short_job_type += "_fullSteel"
             elif '--fullLead' in argv:
                 short_job_type += "_fullLead"
+            elif '--newGeo' in argv:
+                short_job_type += "_newHCalGeo"
         return default_options,job_type,short_job_type,False
 
     elif '--recSlidingWindow' in argv:
@@ -167,6 +169,7 @@ def getJobInfo(argv):
             elif '--fullLead' in argv:
                 default_options = 'config/geantSim_hcalOnly_lead.py'
                 short_job_type += "_fullLead"
+            
         return default_options,job_type,short_job_type,True
 
 
@@ -215,6 +218,7 @@ if __name__=="__main__":
     parser.add_argument("--hcalOnly", action='store_true', help="simulate HCal only (no material in front)")
     parser.add_argument("--fullSteel", action='store_true', help="Use HCal simulation with full steel absorbers.")
     parser.add_argument("--fullLead", action='store_true', help="Use HCal simulation with full lead absorbers.")
+    parser.add_argument("--newGeo", action='store_true', help="Use HCal simulation with new geometry.")
 
     default_options,job_type,short_job_type,sim = getJobInfo(sys.argv)
     parser.add_argument('--jobOptions', type=str, default = default_options, help='Name of the job options run by FCCSW (default config/geantSim.py')
@@ -294,6 +298,8 @@ if __name__=="__main__":
             version = "v03_hcalOnly_fullSteel"
         elif args.fullLead:
             version = "v03_hcalOnly_fullLead"
+        elif args.newGeo:
+            version = "v03_hcalOnly_newHCalGeo"
 
     print 'FCCSim version: ',version
     magnetic_field = not args.bFieldOff
@@ -409,6 +415,8 @@ if __name__=="__main__":
         warning("Please note that '--fullSteel' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
     if args.fullLead and not args.local == "inits/reco.py":
         warning("Please note that '--fullLead' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
+    if args.newGeo and not args.local == "inits/newTileCal.py":
+        warning("Please note that '--newGeo' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/newTileCal.py')", True)
     if args.recTopoClusters and args.numEvents != -1:
         warning("Please note that '--recTopoClusters' is not run on all events available in simu (recommended: '--n -1')", True)
 

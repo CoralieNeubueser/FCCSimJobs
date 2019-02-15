@@ -249,10 +249,7 @@ for event in intree:
                 rec_eta.push_back(position.Eta())
                 rec_phi.push_back(position.Phi())
                 rec_pt.push_back(c.core.energy*position.Unit().Perp())
-                if args.resegmentedHCal:
-                    rec_layer.push_back(hcalBarrelEtaPhi_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
-                else:
-                    rec_layer.push_back(hcalBarrel_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
+                rec_layer.push_back(hcalBarrelEtaPhi_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
                 rec_x.push_back(c.position.x/10.)
                 rec_y.push_back(c.position.y/10.)
                 rec_z.push_back(c.position.z/10.)
@@ -290,10 +287,7 @@ for event in intree:
                 rec_eta.push_back(position.Eta())
                 rec_phi.push_back(position.Phi())
                 rec_pt.push_back(c.core.energy*position.Unit().Perp())
-                if args.resegmentedHCal:
-                    rec_layer.push_back(hcalExtBarrelEtaPhi_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
-                else:
-                    rec_layer.push_back(hcalExtBarrel_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
+                rec_layer.push_back(hcalExtBarrelEtaPhi_decoder.get(c.core.cellId, "layer") + lastECalBarrelLayer + 1)
                 rec_x.push_back(c.position.x/10.)
                 rec_y.push_back(c.position.y/10.)
                 rec_z.push_back(c.position.z/10.)

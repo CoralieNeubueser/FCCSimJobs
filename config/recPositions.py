@@ -119,28 +119,43 @@ rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
 
 from Configurables import CreateVolumeCaloPositions,RedoSegmentation,CreateCaloCells
 # Create cells in HCal
-# 2. step - rewrite the cellId using the Phi-Eta segmentation
-# 3. step - merge new cells corresponding to eta-phi segmentation
+rewriteHCalBarrel = RewriteBitfield("RewriteHCalBarrel",
+                                # old bitfield (readout)
+                                oldReadoutName = "HCalBarrelReadout",
+                                # specify which fields are going to be deleted 
+                                removeIds = ["row"],
+                                # new bitfield (readout), with new segmentation
+                                newReadoutName = "BarHCal_Readout_phieta",
+                                debugPrint = 10,
+                                OutputLevel= INFO)
+# clusters are needed, with deposit position and cellID in bits
+rewriteHCalBarrel.inhits.Path = "HCalBarrelCells"
+rewriteHCalBarrel.outhits.Path = "HCalBarrelCellsStep2"
 
-# Hcal barrel cell positions                                                                                                                                                                                                              
-posHcalBarrel = CreateVolumeCaloPositions("posBarrelHcal", OutputLevel = INFO)
-posHcalBarrel.hits.Path = hcalCells
-posHcalBarrel.positionedHits.Path = "HCalBarrelPositions"
-# Use Phi-Eta segmentation in Hcal barrel                                                                                                                                                                                                  
-resegmentHcalBarrel = RedoSegmentation("ReSegmentationHcal",
-                                       # old bitfield (readout)                         
-                                       oldReadoutName = hcalBarrelReadoutName,
-                                       # specify which fields are going to be altered (deleted/rewritten)
-                                       oldSegmentationIds = ["module","row"],
-                                       # new bitfield (readout), with new segmentation                   
-                                       newReadoutName = hcalBarrelReadoutNamePhiEta,
-                                       OutputLevel = INFO,
-                                       inhits = "HCalBarrelPositions",
-                                       outhits = "HCalBarrelCellsStep2")
-createHcalBarrelCells = CreateCaloCells("CreateHCalBarrelCells",
-                                        doCellCalibration=False, recalibrateBaseline =False,
+rewriteHCalTileBarrel = RewriteBitfield("RewriteHCalTileBarrel",
+                                # old bitfield (readout)
+                                oldReadoutName = "HCalBarrelReadout",
+                                # specify which fields are going to be deleted
+                                removeIds = ["eta"],
+                                # new bitfield (readout), with new segmentation
+                                newReadoutName = "BarHCal_Readout_allTiles",
+                                debugPrint = 10,
+                                OutputLevel= INFO)
+# clusters are needed, with deposit position and cellID in bits
+rewriteHCalTileBarrel.inhits.Path = "HCalBarrelCells"
+rewriteHCalTileBarrel.outhits.Path = "HCalBarrelCellsStep1"
+
+createHcalBarrelTiles = CreateCaloCells("CreateHCalBarrelTiles",
+                                        doCellCalibration=False,
                                         addCellNoise=False, filterCellNoise=False,
-                                        OutputLevel=DEBUG,
+                                        OutputLevel=INFO,
+                                        hits="HCalBarrelCellsStep1",
+                                        cells="HCalBarrelTiles")
+
+createHcalBarrelCells = CreateCaloCells("CreateHCalBarrelCells",
+                                        doCellCalibration=False, 
+                                        addCellNoise=False, filterCellNoise=False,
+                                        OutputLevel=INFO,
                                         hits="HCalBarrelCellsStep2",
                                         cells="newHCalBarrelCells")
 
@@ -153,14 +168,14 @@ resegmentHcalExtBarrel = RedoSegmentation("ReSegmentationHcalExt",
                                           # old bitfield (readout)   
                                           oldReadoutName = hcalExtBarrelReadoutName,
                                           # specify which fields are going to be altered (deleted/rewritten)
-                                          oldSegmentationIds = ["module","row"],
+                                          oldSegmentationIds = ["row"],
                                           # new bitfield (readout), with new segmentation                   
                                           newReadoutName = hcalExtBarrelReadoutNamePhiEta,
                                           OutputLevel = INFO,
                                           inhits = "HCalExtBarrelPositions",
                                           outhits = "HCalExtBarrelCellsStep2")
 createHcalExtBarrelCells = CreateCaloCells("CreateHCalExtBarrelCells",
-                                           doCellCalibration=False, recalibrateBaseline =False,
+                                           doCellCalibration=False, 
                                            addCellNoise=False, filterCellNoise=False,
                                            OutputLevel=INFO,
                                            hits="HCalExtBarrelCellsStep2",
@@ -181,9 +196,9 @@ EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC",
 ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd",
                                         readoutName = ecalFwdReadoutName,
                                         OutputLevel = INFO)
-HCalBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrel",
-                                              readoutName = hcalBarrelReadoutName,
-                                              OutputLevel = INFO)
+HCalBcells = CellPositionsECalBarrelTool("CellPositionsHCalBarrel",
+                                         readoutName = "BarHCal_Readout_allTiles",
+                                         OutputLevel = INFO)
 HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel",
                                                  readoutName = hcalExtBarrelReadoutName,
                                                  OutputLevel = INFO)
@@ -229,7 +244,7 @@ positionsEcalBarrel = CreateCellPositions("positionsEcalBarrel",
                                           OutputLevel = INFO)
 positionsHcalBarrel = CreateCellPositions("positionsHcalBarrel",
                                           positionsTool=HCalBcells,
-                                          hits = prefix+"HCalBarrelCells",
+                                          hits = prefix+"HCalBarrelTiles",
                                           positionedHits = "HCalBarrelCellPositions",
                                           OutputLevel = INFO)
 positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel",
@@ -308,39 +323,34 @@ if not hcalOnly:
                            positionsEcalFwd,
                            positionsHcalEndcap,
                            positionsHcalFwd,
-                           ]
-    if resegmentHCal:
-        list_of_algorithms += [
-            posHcalBarrel,
-            resegmentHcalBarrel,
-            createHcalBarrelCells,
+                           rewriteHCalBarrel,
+                           rewriteHCalTileBarrel,
+           #                posHcalBarrel,
+           #                resegmentHcalBarrel,
+                           createHcalBarrelCells,
+                           createHcalBarrelTiles,
            # posHcalExtBarrel,
             #resegmentHcalExtBarrel,
             #createHcalExtBarrelCells,
-            positionsHcalSegBarrel,
-            positionsHcalExtBarrel,
-            ]
-    else:
-        list_of_algorithms += [ positionsHcalBarrel,
-                                positionsHcalExtBarrel,
-                                ]
+                           positionsHcalBarrel,
+                           positionsHcalSegBarrel,
+           #                positionsHcalExtBarrel,
+                           ]
 
 else:
     if resegmentHCal:
         list_of_algorithms += [
-            posHcalBarrel,
-            resegmentHcalBarrel,
+            rewriteHCalBarrel,
             createHcalBarrelCells,
-#            posHcalExtBarrel,
-#            resegmentHcalExtBarrel,
-#            createHcalExtBarrelCells,
             positionsHcalSegBarrel,
-            positionsHcalExtBarrel,
-            ]
+        ]
     else:
-        list_of_algorithms += [ positionsHcalBarrel,
-                                positionsHcalExtBarrel,
-                                ]
+        list_of_algorithms += [
+            rewriteHCalTileBarrel,
+            createHcalBarrelTiles,
+            positionsHcalBarrel,
+            ]
+        
         
 if addMuons:
     list_of_algorithms += [positionsTailCatcher]

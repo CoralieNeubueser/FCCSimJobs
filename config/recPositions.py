@@ -186,7 +186,7 @@ createHcalExtBarrelCells = CreateCaloCells("CreateHCalExtBarrelCells",
 ##############################################################################################################
 
 #Configure tools for calo cell positions
-from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsHCalBarrelTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool
+from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsHCalBarrelAllTilesTool, CellPositionsHCalBarrelTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool
 ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel",
                                     readoutName = ecalBarrelReadoutName,
                                     OutputLevel = INFO)
@@ -196,9 +196,10 @@ EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC",
 ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd",
                                         readoutName = ecalFwdReadoutName,
                                         OutputLevel = INFO)
-HCalBcells = CellPositionsECalBarrelTool("CellPositionsHCalBarrel",
-                                         readoutName = "BarHCal_Readout_allTiles",
-                                         OutputLevel = INFO)
+HCalBcells = CellPositionsHCalBarrelAllTilesTool("CellPositionsHCalBarrel",
+                                                 readoutName = "BarHCal_Readout_allTiles",
+                                                 radii = [291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 403.55, 428.55, 453.55],
+                                                 OutputLevel = INFO)
 HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel",
                                                  readoutName = hcalExtBarrelReadoutName,
                                                  OutputLevel = INFO)

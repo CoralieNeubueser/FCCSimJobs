@@ -138,7 +138,7 @@ rewriteHCalTileBarrel = RewriteBitfield("RewriteHCalTileBarrel",
                                 # specify which fields are going to be deleted
                                 removeIds = ["eta"],
                                 # new bitfield (readout), with new segmentation
-                                newReadoutName = "BarHCal_Readout_allTiles",
+                                newReadoutName = "BarHCal_Readout_phi",
                                 debugPrint = 10,
                                 OutputLevel= INFO)
 # clusters are needed, with deposit position and cellID in bits
@@ -186,7 +186,7 @@ createHcalExtBarrelCells = CreateCaloCells("CreateHCalExtBarrelCells",
 ##############################################################################################################
 
 #Configure tools for calo cell positions
-from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsHCalBarrelAllTilesTool, CellPositionsHCalBarrelTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool
+from Configurables import CellPositionsECalBarrelTool, CellPositionsHCalBarrelNoSegTool, CellPositionsHCalBarrelPhiSegTool, CellPositionsHCalBarrelTool, CellPositionsCaloDiscsTool, CellPositionsCaloDiscsTool
 ECalBcells = CellPositionsECalBarrelTool("CellPositionsECalBarrel",
                                     readoutName = ecalBarrelReadoutName,
                                     OutputLevel = INFO)
@@ -196,8 +196,8 @@ EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC",
 ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd",
                                         readoutName = ecalFwdReadoutName,
                                         OutputLevel = INFO)
-HCalBcells = CellPositionsHCalBarrelAllTilesTool("CellPositionsHCalBarrel",
-                                                 readoutName = "BarHCal_Readout_allTiles",
+HCalBcells = CellPositionsHCalBarrelPhiSegTool("CellPositionsHCalBarrel",
+                                                 readoutName = "BarHCal_Readout_phi",
                                                  radii = [291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 403.55, 428.55, 453.55],
                                                  OutputLevel = INFO)
 HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel",

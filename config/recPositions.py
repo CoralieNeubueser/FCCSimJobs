@@ -131,6 +131,18 @@ rewriteHCalBarrel = RewriteBitfield("RewriteHCalBarrel",
 # clusters are needed, with deposit position and cellID in bits
 rewriteHCalBarrel.inhits.Path = "HCalBarrelCells"
 rewriteHCalBarrel.outhits.Path = "HCalBarrelCellsStep2"
+rewriteHCalExtBarrel = RewriteBitfield("RewriteHCalExtBarrel",
+                                # old bitfield (readout)
+                                oldReadoutName = "HCalExtBarrelReadout",
+                                # specify which fields are going to be deleted
+                                removeIds = ["row"],
+                                # new bitfield (readout), with new segmentation
+                                newReadoutName = "ExtBarHCal_Readout_phieta",
+                                debugPrint = 10,
+                                OutputLevel= INFO)
+# clusters are needed, with deposit position and cellID in bits
+rewriteHCalExtBarrel.inhits.Path = "HCalExtBarrelCells"
+rewriteHCalExtBarrel.outhits.Path = "HCalExtBarrelCellsStep2"
 
 rewriteHCalTileBarrel = RewriteBitfield("RewriteHCalTileBarrel",
                                 # old bitfield (readout)
@@ -144,6 +156,18 @@ rewriteHCalTileBarrel = RewriteBitfield("RewriteHCalTileBarrel",
 # clusters are needed, with deposit position and cellID in bits
 rewriteHCalTileBarrel.inhits.Path = "HCalBarrelCells"
 rewriteHCalTileBarrel.outhits.Path = "HCalBarrelCellsStep1"
+rewriteHCalTileExtBarrel = RewriteBitfield("RewriteHCalTileExtBarrel",
+                                # old bitfield (readout)
+                                oldReadoutName = "HCalExtBarrelReadout",
+                                        # specify which fields are going to be deleted
+                                removeIds = ["eta"],
+                                        # new bitfield (readout), with new segmentation
+                                newReadoutName = "ExtBarHCal_Readout_phi",
+                                debugPrint = 10,
+                                OutputLevel= INFO)
+# clusters are needed, with deposit position and cellID in bits
+rewriteHCalTileExtBarrel.inhits.Path = "HCalExtBarrelCells"
+rewriteHCalTileExtBarrel.outhits.Path = "HCalExtBarrelCellsStep1"
 
 createHcalBarrelTiles = CreateCaloCells("CreateHCalBarrelTiles",
                                         doCellCalibration=False,
@@ -159,21 +183,13 @@ createHcalBarrelCells = CreateCaloCells("CreateHCalBarrelCells",
                                         hits="HCalBarrelCellsStep2",
                                         cells="newHCalBarrelCells")
 
-# Ext Hcal barrel cell positions                                                                                                                                                                                    
-posHcalExtBarrel = CreateVolumeCaloPositions("posExtBarrelHcal", OutputLevel = INFO)
-posHcalExtBarrel.hits.Path = hcalExtCells
-posHcalExtBarrel.positionedHits.Path = "HCalExtBarrelPositions"
-# Use Phi-Eta segmentation in Hcal barrel                                                                                                                                                                                                  
-resegmentHcalExtBarrel = RedoSegmentation("ReSegmentationHcalExt",
-                                          # old bitfield (readout)   
-                                          oldReadoutName = hcalExtBarrelReadoutName,
-                                          # specify which fields are going to be altered (deleted/rewritten)
-                                          oldSegmentationIds = ["row"],
-                                          # new bitfield (readout), with new segmentation                   
-                                          newReadoutName = hcalExtBarrelReadoutNamePhiEta,
-                                          OutputLevel = INFO,
-                                          inhits = "HCalExtBarrelPositions",
-                                          outhits = "HCalExtBarrelCellsStep2")
+createHcalExtBarrelTiles = CreateCaloCells("CreateHCalExtBarrelTiles",
+                                           doCellCalibration=False,
+                                           addCellNoise=False, filterCellNoise=False,
+                                           OutputLevel=INFO,
+                                           hits="HCalExtBarrelCellsStep1",
+                                           cells="HCalExtBarrelTiles")
+
 createHcalExtBarrelCells = CreateCaloCells("CreateHCalExtBarrelCells",
                                            doCellCalibration=False, 
                                            addCellNoise=False, filterCellNoise=False,
@@ -200,9 +216,14 @@ HCalBcells = CellPositionsHCalBarrelPhiSegTool("CellPositionsHCalBarrel",
                                                  readoutName = "BarHCal_Readout_phi",
                                                  radii = [291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 403.55, 428.55, 453.55],
                                                  OutputLevel = INFO)
-HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel",
-                                                 readoutName = hcalExtBarrelReadoutName,
-                                                 OutputLevel = INFO)
+HCalExtBcells = CellPositionsHCalBarrelPhiSegTool("CellPositionsHCalExtBarrel",
+                                                  readoutName = "ExtBarHCal_Readout_phi",
+                                                  radii = [ 356.05, 373.55, 398.55, 423.55, 291.05, 301.05, 313.55, 328.55, 348.55
+                                                            , 373.55
+                                                            , 398.55
+                                                            , 423.55
+                                                            ],
+                                                  OutputLevel = INFO)
 HCalBsegcells = CellPositionsHCalBarrelTool("CellPositionsHCalSegBarrel",
                                             readoutName = hcalBarrelReadoutNamePhiEta,
                                             radii = [291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 403.55, 428.55, 453.55],
@@ -250,7 +271,7 @@ positionsHcalBarrel = CreateCellPositions("positionsHcalBarrel",
                                           OutputLevel = INFO)
 positionsHcalExtBarrel = CreateCellPositions("positionsHcalExtBarrel",
                                           positionsTool=HCalExtBcells,
-                                          hits = prefix+"HCalExtBarrelCells",
+                                          hits = prefix+"HCalExtBarrelTiles",
                                           positionedHits = "HCalExtBarrelCellPositions",
                                           OutputLevel = INFO)
 positionsHcalSegBarrel = CreateCellPositions("positionsSegHcalBarrel",
@@ -326,30 +347,36 @@ if not hcalOnly:
                            positionsHcalFwd,
                            rewriteHCalBarrel,
                            rewriteHCalTileBarrel,
-           #                posHcalBarrel,
-           #                resegmentHcalBarrel,
+                           rewriteHCalExtBarrel,
+                           rewriteHCalTileExtBarrel,
                            createHcalBarrelCells,
                            createHcalBarrelTiles,
-           # posHcalExtBarrel,
-            #resegmentHcalExtBarrel,
-            #createHcalExtBarrelCells,
+                           createHcalExtBarrelCells,
+                           createHcalExtBarrelTiles,
                            positionsHcalBarrel,
                            positionsHcalSegBarrel,
-           #                positionsHcalExtBarrel,
+                           positionsHcalExtBarrel,
+                           positionsHcalSegExtBarrel
                            ]
 
 else:
     if resegmentHCal:
         list_of_algorithms += [
             rewriteHCalBarrel,
+            rewriteHCalExtBarrel,
             createHcalBarrelCells,
+            createHcalExtBarrelCells,
             positionsHcalSegBarrel,
-        ]
+            positionsHcalSegExtBarrel
+            ]
     else:
         list_of_algorithms += [
             rewriteHCalTileBarrel,
+            rewriteHCalTileExtBarrel,
             createHcalBarrelTiles,
+            createHcalExtBarrelTiles,
             positionsHcalBarrel,
+            positionsHcalExtBarrel,
             ]
         
         

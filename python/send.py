@@ -187,7 +187,7 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--local', type=str, help='Use local FCCSW installation, need to provide a file with path_to_INIT and or path_to_FCCSW')
-    parser.add_argument('--version', type=str, default = "v03", help='Specify the version of FCCSimJobs')
+    parser.add_argument('--version', type=str, default = "v04", help='Specify the version of FCCSimJobs')
 
     parser.add_argument("--bFieldOff", action='store_true', help="Switch OFF magnetic field (default: B field ON)")
     parser.add_argument("--pythiaSmearVertex", action='store_true', help="Write vertex smearing parameters to pythia config file")
@@ -531,9 +531,10 @@ if __name__=="__main__":
         frun.write('unset PYTHONPATH\n')
         frun.write('export JOBDIR=$PWD\n')
         frun.write('source %s\n' % (path_to_INIT))
-        # workaround for pythia 8 version mismatch
-        frun.write("export PYTHIA8_XML=/cvmfs/sft.cern.ch/lcg/releases/MCGenerators/pythia8/230-b1563/x86_64-slc6-gcc62-opt/share/Pythia8/xmldoc/\n")
-        frun.write("export PYTHIA8DATA=$PYTHIA8_XML\n")
+        # workaround for pythia 8 version mismatch in v03/ and earlier
+        if version!='v04':
+            frun.write("export PYTHIA8_XML=/cvmfs/sft.cern.ch/lcg/releases/MCGenerators/pythia8/230-b1563/x86_64-slc6-gcc62-opt/share/Pythia8/xmldoc/\n")
+            frun.write("export PYTHIA8DATA=$PYTHIA8_XML\n")
 
         # set options to run FCCSW
         common_fccsw_command = '%s/run fccrun.py %s --outName $JOBDIR/%s --numEvents %i'%(path_to_FCCSW,job_options, outfile ,num_events)

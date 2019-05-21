@@ -138,6 +138,9 @@ def getJobInfo(argv):
         if '--resegmentHCal' in argv:
             job_type += "resegmentedHCal/"
             short_job_type += "_resegmHCal"
+        if '--split' in argv:
+            job_type += "splitted/"
+            short_job_type += "_split"
         if '--calibrate' in argv:
             job_type += "/calibrated/11_2018/"
             short_job_type += "_calib"
@@ -257,6 +260,7 @@ if __name__=="__main__":
     recoTopoClusterGroup.add_argument('--sigma3', type=int, default=0, help='Energy threshold [in number of sigmas] for last neighbours')
     recoTopoClusterGroup.add_argument('--calibrate', action='store_true', help="Calibrate Topo-cluster")
     recoTopoClusterGroup.add_argument('--benchmark', action='store_true', help="Use cell-wise determined benchmark parameters for calibration of topo-cluster")
+    recoTopoClusterGroup.add_argument('--split', action='store_true', help="Split topo-clusters after building.")
 
     args, _ = parser.parse_known_args()
 
@@ -536,7 +540,10 @@ if __name__=="__main__":
         frun.write("export PYTHIA8DATA=$PYTHIA8_XML\n")
 
         # set options to run FCCSW
-        common_fccsw_command = '%s/run fccrun.py %s --outName $JOBDIR/%s --numEvents %i'%(path_to_FCCSW,job_options, outfile ,num_events)
+        run_command = path_to_FCCSW
+        if version=='v04':
+            run_command = "/afs/cern.ch/work/v/vavolkl/public/fcc.cern.ch/sw/fccsw/v0.10/x86_64-centos7-gcc62-opt/"
+        common_fccsw_command = '%s/run fccrun.py %s --outName $JOBDIR/%s --numEvents %i'%(run_command,job_options, outfile ,num_events)
         if not magnetic_field:
             common_fccsw_command += ' --bFieldOff'
         if sim:
@@ -545,6 +552,8 @@ if __name__=="__main__":
             common_fccsw_command += ' --addElectronicsNoise'
         elif args.addPileupNoise:
             common_fccsw_command += ' --addPileupNoise --pileup ' + str(args.pileup)
+        if args.split:
+            common_fccsw_command += ' --split'    
         if args.calibrate:
             common_fccsw_command += ' --calibrate'
         elif args.benchmark:
@@ -692,7 +701,8 @@ if __name__=="__main__":
                 fsub.write('RequestCpus = 8\n')
             else:
                 fsub.write('RequestCpus = 4\n')
-            fsub.write('+JobFlavour = "nextweek"\n')
+            fsub.write('requirements = (OpSysAndVer =?= "SLCern6")\n')
+            fsub.write('+JobFlavour = "tomorrow"\n') #"nextweek"\n')
             fsub.write('+AccountingGroup = "group_u_FCC.local_gen"\n')
             fsub.write('queue 1\n')
             fsub.close()

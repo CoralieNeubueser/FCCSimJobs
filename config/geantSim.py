@@ -125,11 +125,33 @@ else:
     field = SimG4ConstantMagneticFieldTool("bField", FieldOn=False)
 
 from Configurables import SimG4Svc
-geantservice = SimG4Svc("SimG4Svc", detector='SimG4DD4hepDetector', physicslist="SimG4FtfpBert", actions="SimG4FullSimActions", magneticField=field)
+geantservice = SimG4Svc("SimG4Svc", detector='SimG4DD4hepDetector', physicslist="SimG4FtfpBert", actions="SimG4FullSimActions", magneticField=field, regions=["SimG4FastSimTrackerRegion/model"])
 # range cut
 geantservice.g4PostInitCommands += ["/run/setCut 0.1 mm"]
 
 from Configurables import SimG4Alg, SimG4SaveCalHits, SimG4SingleParticleGeneratorTool, SimG4SaveTrackerHits
+
+##############################################################################################################                                                                  
+#######                                       SMEAR GEN PARTICLES                                #############                                                                  
+##############################################################################################################                                                                  
+from Configurables import SimG4ParticleSmearRootFile, SimG4FastSimTrackerRegion, SimG4SaveSmearedParticles
+from GaudiKernel.SystemOfUnits import GeV, TeV
+# Geant4 service
+smeartool = SimG4ParticleSmearRootFile()
+smeartool.filename="/eos/project/f/fccsw-web/testsamples/tkLayout_example_resolutions.root"
+## create region and a parametrisation model, pass smearing tool
+regiontool = SimG4FastSimTrackerRegion("model")
+regiontool.volumeNames=["TrackerEnvelopeBarrel"]
+regiontool.minMomentum = 5*GeV
+regiontool.maxMomentum = 10*TeV
+regiontool.maxEta=6
+regiontool.smearing=smeartool
+
+saveparticlestool = SimG4SaveSmearedParticles("saveSmearedParticles")
+saveparticlestool.particles.Path = "smearedParticles"
+saveparticlestool.particlesMCparticles.Path = "particleMCparticleAssociation"
+
+geantservice.regions=["SimG4FastSimTrackerRegion/model"]
 
 savetrackertool = SimG4SaveTrackerHits("saveTrackerHits", readoutNames = ["TrackerBarrelReadout", "TrackerEndcapReadout"]) 
 savetrackertool.positionedTrackHits.Path = "TrackerPositionedHits"
@@ -160,9 +182,11 @@ savehcalfwdtool.caloHits.Path = "HCalFwdHits"
 savetailcatchertool = SimG4SaveCalHits("saveTailCatcherHits", readoutNames = [tailCatcherReadoutName])
 savetailcatchertool.positionedCaloHits = "TailCatcherPositionedHits"
 savetailcatchertool.caloHits = "TailCatcherHits"
+
 outputHitsTools += ["SimG4SaveCalHits/saveECalEndcapHits","SimG4SaveCalHits/saveECalFwdHits",
                     "SimG4SaveCalHits/saveHCalExtBarrelHits", "SimG4SaveCalHits/saveHCalEndcapHits",
-                    "SimG4SaveCalHits/saveHCalFwdHits", "SimG4SaveCalHits/saveTailCatcherHits", "SimG4SaveTrackerHits/saveTrackerHits"]
+                    "SimG4SaveCalHits/saveHCalFwdHits", "SimG4SaveCalHits/saveTailCatcherHits", 
+                    "SimG4SaveTrackerHits/saveTrackerHits","SimG4SaveSmearedParticles/saveSmearedParticles"]
 
 geantsim = SimG4Alg("SimG4Alg", outputs = outputHitsTools)
 
@@ -199,7 +223,6 @@ else:
     particle_converter = SimG4PrimariesFromEdmTool("EdmConverter")
     particle_converter.genParticles.Path = "GenParticles"
     geantsim.eventProvider = particle_converter
-
 
 ##############################################################################################################
 #######                                       DIGITISATION                                       #############
@@ -336,6 +359,8 @@ out = PodioOutput("out")
 out.outputCommands = ["drop *",
                       "keep GenParticles",
                       "keep GenVertices",
+                      "keep smearedParticles",
+                      "keep particleMCparticleAssociation",
                       "keep TrackerHits",
                       "keep TrackerPositionedHits",
                       "keep TrackerDigiPostPoint",

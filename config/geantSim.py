@@ -162,7 +162,8 @@ savetailcatchertool.positionedCaloHits = "TailCatcherPositionedHits"
 savetailcatchertool.caloHits = "TailCatcherHits"
 outputHitsTools += ["SimG4SaveCalHits/saveECalEndcapHits","SimG4SaveCalHits/saveECalFwdHits",
                     "SimG4SaveCalHits/saveHCalExtBarrelHits", "SimG4SaveCalHits/saveHCalEndcapHits",
-                    "SimG4SaveCalHits/saveHCalFwdHits", "SimG4SaveCalHits/saveTailCatcherHits", "SimG4SaveTrackerHits/saveTrackerHits"]
+                   "SimG4SaveCalHits/saveHCalFwdHits", 
+                    "SimG4SaveCalHits/saveTailCatcherHits", "SimG4SaveTrackerHits/saveTrackerHits"]
 
 geantsim = SimG4Alg("SimG4Alg", outputs = outputHitsTools)
 

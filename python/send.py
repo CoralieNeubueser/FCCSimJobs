@@ -537,7 +537,10 @@ if __name__=="__main__":
             frun.write("export PYTHIA8DATA=$PYTHIA8_XML\n")
 
         # set options to run FCCSW
-        common_fccsw_command = '%s/run fccrun.py %s --outName $JOBDIR/%s --numEvents %i'%(path_to_FCCSW,job_options, outfile ,num_events)
+        run_command = path_to_FCCSW
+        #if version=='v04':
+        #    run_command = "/afs/cern.ch/work/v/vavolkl/public/fcc.cern.ch/sw/fccsw/v0.10/x86_64-centos7-gcc62-opt/"
+        common_fccsw_command = '%s/run fccrun.py %s --outName $JOBDIR/%s --numEvents %i'%(run_command,job_options, outfile ,num_events)
         if not magnetic_field:
             common_fccsw_command += ' --bFieldOff'
         if sim:

@@ -82,6 +82,17 @@ gen_pdgid = r.std.vector(float)()
 gen_status = r.std.vector(float)()
 gen_bits = r.std.vector(float)()
 
+track_eta = r.std.vector(float)()
+track_phi = r.std.vector(float)()
+track_pt  = r.std.vector(float)()
+track_x  = r.std.vector(float)()
+track_y  = r.std.vector(float)()
+track_z  = r.std.vector(float)()
+track_energy = r.std.vector(float)()
+track_pdgid = r.std.vector(float)()
+track_status = r.std.vector(float)()
+track_bits = r.std.vector(float)()
+
 cluster_eta = r.std.vector(float)()
 cluster_phi = r.std.vector(float)()
 cluster_pt  = r.std.vector(float)()
@@ -93,9 +104,7 @@ cluster_cells = r.std.vector(int)()
 cluster_seedCells = r.std.vector(int)()
 cluster_neighbourCells = r.std.vector(int)()
 cluster_arbitraryCells = r.std.vector(int)()
-cluster_rmsR = r.std.vector(float)()
-cluster_rmsPhi = r.std.vector(float)()
-cluster_rmsEta = r.std.vector(float)()
+cluster_deltaR = r.std.vector(float)()
 
 rec_eta = r.std.vector(float)()
 rec_phi = r.std.vector(float)()
@@ -133,9 +142,7 @@ outtree.Branch("cluster_cells", cluster_cells)
 outtree.Branch("cluster_seedCells", cluster_seedCells)
 outtree.Branch("cluster_neighbourCells", cluster_neighbourCells)
 outtree.Branch("cluster_arbitraryCells", cluster_arbitraryCells)
-outtree.Branch("cluster_rmsR", cluster_rmsR)
-outtree.Branch("cluster_rmsEta", cluster_rmsEta)
-outtree.Branch("cluster_rmsPhi", cluster_rmsPhi)
+outtree.Branch("cluster_deltaR", cluster_deltaR)
 
 outtree.Branch("rechit_pt", rec_pt)
 outtree.Branch("rechit_eta", rec_eta)
@@ -158,6 +165,18 @@ outtree.Branch("gen_energy", gen_energy)
 outtree.Branch("gen_status", gen_status)
 outtree.Branch("gen_pdgid", gen_pdgid)
 outtree.Branch("gen_bits", gen_bits)
+
+outtree.Branch("track_pt", track_pt)
+outtree.Branch("track_x", track_x)
+outtree.Branch("track_y", track_y)
+outtree.Branch("track_z", track_z)
+outtree.Branch("track_eta", track_eta)
+outtree.Branch("track_phi", track_phi)
+outtree.Branch("track_energy", track_energy)
+outtree.Branch("track_status", track_status)
+outtree.Branch("track_pdgid", track_pdgid)
+outtree.Branch("track_bits", track_bits)
+
 
 numEvent = 0
 with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_pythia.py
@@ -216,7 +235,35 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                         phiGen = -phiGen
 
             print 'gen particle:  ', etaGen,phiGen,energyGen
+
+        if ev.get("SmearedParticles"):
+            for g in ev.get("SmearedParticles"):
+                if g.status() == 1:
+                    position = r.TVector3(g.p4().px,g.p4().py,g.p4().pz)
+
+                    track_x.push_back(g.startVertex().x()/10.)
+                    track_y.push_back(g.startVertex().y()/10.)
+                    track_z.push_back(g.startVertex().z()/10.)
+
+                    pt=math.sqrt(g.p4().px**2+g.p4().py**2)
+
+                    eta=position.Eta()
+                    phi=position.Phi()
+
+                    tlv=r.TLorentzVector()
+                    tlv.SetPtEtaPhiM(pt,eta,phi,g.p4().mass)
+                    track_pt.push_back(pt)
+                    track_eta.push_back(eta)
+                    track_phi.push_back(phi)
+                    track_energy.push_back(math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2))
+                    track_bits.push_back(g.bits())
+
+                    if math.fabs(tlv.E()-math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2))>0.01 and g.status==1:
+                        print '=======================etlv  ',tlv.E(),'    ',math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2),'  eta  ',eta,'   phi   ',phi,'  x  ',g.p4().px,'  y  ',g.p4().py,'  z  ',g.p4().pz
+                    track_pdgid.push_back(g.pdgId())
+                    track_status.push_back(g.status())
     
+                        
         if ev.get("caloClustersBarrel"):
             print 'Using cluster collection "caloClustersBarrel" '
             for c in ev.get("caloClustersBarrel"):
@@ -241,31 +288,23 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                 cluster_x.push_back(c.position().x/10.)
                 cluster_y.push_back(c.position().y/10.)
                 cluster_z.push_back(c.position().z/10.)
+                cluster_deltaR.push_back(c.time())
 
                 cluster_cells.push_back(c.hits_size())
                 # calculate rmsEta, rmsPhi
                 # get cell types
-                rmsEta=float
-                rmsPhi=float
-                rmsR=float
-                cellTypes = []
+                energySum=float(0)
+                rmsEta=float(0)
+                rmsPhi=float(0)
+                rmsR=float(0)
+                cellTypes = [int(0)] * 3
+                
                 for cell in range(0, c.hits_size()):
-                    cellTypes[c.hits(cell).core().bits] += 1
-                    r = math.sqrt((c.hits(cell).core().position().x**2)+(c.hits(cell).core().position().y**2))
-
-                    rmsEta += c.hits(cell).core().energy * c.hits(cell).core().position().x
-                    rmsPhi += c.hits(cell).core().energy * c.hits(cell).core().position().x
-                    rmsR += c.hits(cell).core().energy * r
+                    cellTypes[int(c.hits(cell).core().bits-1)] += 1
                     
-                    energySum += c.hits(cell).core().energy
-
                 cluster_seedCells.push_back(cellTypes[0])
                 cluster_neighbourCells.push_back(cellTypes[1])
                 cluster_arbitraryCells.push_back(cellTypes[2])
-
-                cluster_rmsR.push_back(rmsR/energySum)
-                cluster_rmsEta.push_back(rmsEta/energySum)
-
 
         elif ev.get("caloClustersBarrelNoise"):
             print 'Using cluster collection "caloClustersBarrelNoise" '
@@ -278,7 +317,22 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                 cluster_x.push_back(c.position().x/10.)
                 cluster_y.push_back(c.position().y/10.)
                 cluster_z.push_back(c.position().z/10.)
+                cluster_deltaR.push_back(c.time())
                 cluster_cells.push_back(c.hits_size())
+                # calculate rmsEta, rmsPhi                                                                                                                                                               
+                # get cell types                                                                                                                                                                        
+                energySum=float(0)
+                rmsEta=float(0)
+                rmsPhi=float(0)
+                rmsR=float(0)
+                cellTypes = [int(0)] * 3
+                
+                for cell in range(0, c.hits_size()):
+                    cellTypes[int(c.hits(cell).core().bits-1)] += 1
+
+                cluster_seedCells.push_back(cellTypes[0])
+                cluster_neighbourCells.push_back(cellTypes[1])
+                cluster_arbitraryCells.push_back(cellTypes[2])
 
         elif ev.get("caloClusters"):
             print 'Using cluster collection "caloClusters" '
@@ -495,14 +549,19 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
         gen_energy.clear()
         gen_pdgid.clear()
         gen_status.clear()
+
+        track_eta.clear()
+        track_phi.clear()
+        track_pt.clear()
+        track_energy.clear()
+        track_pdgid.clear()
+        track_status.clear()
         
         cluster_cells.clear()
         cluster_seedCells.clear()
         cluster_neighbourCells.clear()
         cluster_arbitraryCells.clear()
-        cluster_rmsR.clear()
-        cluster_rmsPhi.clear()
-        cluster_rmsEta.clear()
+        cluster_deltaR.clear()
         cluster_eta.clear()
         cluster_phi.clear()
         cluster_pt.clear()

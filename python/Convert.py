@@ -10,7 +10,7 @@ result=gSystem.Load("libDDCorePlugins")
 from ROOT import dd4hep
 from EventStore import EventStore
 if result < 0:
-    print "No lib loadable!"
+    print ("No lib loadable!")
 
 system_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4")
 ecalBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,cryo:1,type:3,subtype:3,layer:8,eta:9,phi:10")
@@ -47,7 +47,7 @@ def signy(y):
     return 0
 
 if len(sys.argv)!=3:
-    print 'usage python Convert.py infile outfile'
+    print ('usage python Convert.py infile outfile')
 infile_name = sys.argv[1]
 outfile_name = sys.argv[2]
 
@@ -221,7 +221,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                     energyGen += math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2)
                     
                     if math.fabs(tlv.E()-math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2))>0.01 and g.status==1:
-                        print '=======================etlv  ',tlv.E(),'    ',math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2),'  eta  ',eta,'   phi   ',phi,'  x  ',g.p4().px,'  y  ',g.p4().py,'  z  ',g.p4().pz
+                        print ('=======================etlv  ',tlv.E(),'    ',math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2),'  eta  ',eta,'   phi   ',phi,'  x  ',g.p4().px,'  y  ',g.p4().py,'  z  ',g.p4().pz)
                     gen_pdgid.push_back(g.pdgId())
                     gen_status.push_back(g.status())
                         
@@ -234,7 +234,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                         etaGen = -etaGen
                         phiGen = -phiGen
 
-            print 'gen particle:  ', etaGen,phiGen,energyGen
+            print ('gen particle:  ', etaGen,phiGen,energyGen)
 
         if ev.get("SmearedParticles"):
             for g in ev.get("SmearedParticles"):
@@ -259,13 +259,13 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                     track_bits.push_back(g.bits())
 
                     if math.fabs(tlv.E()-math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2))>0.01 and g.status==1:
-                        print '=======================etlv  ',tlv.E(),'    ',math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2),'  eta  ',eta,'   phi   ',phi,'  x  ',g.p4().px,'  y  ',g.p4().py,'  z  ',g.p4().pz
-                    track_pdgid.push_back(g.pdgId())
-                    track_status.push_back(g.status())
+                        #print '=======================etlv  ',tlv.E(),'    ',math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2),'  eta  ',eta,'   phi   ',phi,'  x  ',g.p4().px,'  y  ',g.p4().py,'  z  ',g.p4().pz
+                        track_pdgid.push_back(g.pdgId())
+                        track_status.push_back(g.status())
     
                         
         if ev.get("caloClustersBarrel"):
-            print 'Using cluster collection "caloClustersBarrel" '
+            print ('Using cluster collection "caloClustersBarrel" ')
             for c in ev.get("caloClustersBarrel"):
                 position = r.TVector3(c.position().x,c.position().y,c.position().z)
                 cluster_ene.push_back(c.energy())
@@ -278,7 +278,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                 cluster_cells.push_back(c.hits_size())
     
         elif ev.get("calibCaloClustersBarrelNoise"):
-            print 'Using cluster collection "calibCaloClustersBarrelNoise" '
+            #print 'Using cluster collection "calibCaloClustersBarrelNoise" '
             for c in ev.get("calibCaloClustersBarrelNoise"):
                 position = r.TVector3(c.position().x,c.position().y,c.position().z)
                 cluster_ene.push_back(c.energy())
@@ -307,7 +307,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                 cluster_arbitraryCells.push_back(cellTypes[2])
 
         elif ev.get("caloClustersBarrelNoise"):
-            print 'Using cluster collection "caloClustersBarrelNoise" '
+            #print 'Using cluster collection "caloClustersBarrelNoise" '
             for c in ev.get("caloClustersBarrelNoise"):
                 position = r.TVector3(c.position().x,c.position().y,c.position().z)
                 cluster_ene.push_back(c.energy())
@@ -335,7 +335,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                 cluster_arbitraryCells.push_back(cellTypes[2])
 
         elif ev.get("caloClusters"):
-            print 'Using cluster collection "caloClusters" '
+            #print 'Using cluster collection "caloClusters" '
             for c in ev.get("caloClusters"):
                 position = r.TVector3(c.position().x,c.position().y,c.position().z)
                 cluster_ene.push_back(c.energy())
@@ -348,7 +348,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                 cluster_cells.push_back(c.hits_size())
 
         elif ev.get("caloClustersNoise"):
-            print 'Using cluster collection "caloClustersNoise" '
+            #print 'Using cluster collection "caloClustersNoise" '
             for c in ev.get("caloClustersNoise"):
                 position = r.TVector3(c.position().x,c.position().y,c.position().z)
                 cluster_ene.push_back(c.energy())
@@ -362,7 +362,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                     
         else:
             if ev.get("HCalBarrelCellPositions"):
-                print 'Using cell collection "HCalBarrelCellPositions" '
+                #print 'Using cell collection "HCalBarrelCellPositions" '
                 for c in ev.get("HCalBarrelCellPositions"):
                     position = r.TVector3(c.position().x,c.position().y,c.position().z)
                     recPhi = float(position.Phi())
@@ -383,7 +383,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                     numHits += 1
                         
             if ev.get("ECalBarrelCellPositions"):
-                print 'Using cell collection "ECalBarrelCellPositions" '
+                #print 'Using cell collection "ECalBarrelCellPositions" '
                 for c in ev.get("ECalBarrelCellPositions"):
                     position = r.TVector3(c.position().x,c.position().y,c.position().z)
                     rec_ene.push_back(c.energy())

@@ -479,6 +479,8 @@ if __name__=="__main__":
 
     seed=''
     uid=os.path.join(version, job_dir, job_type)
+    args_file = open(os.path.join(logdir, "arguments.txt"), "wb")
+
     for i in xrange(num_jobs):
         if sim:
             seed=ut.getuid()
@@ -526,7 +528,6 @@ if __name__=="__main__":
             time.sleep(10)
             frun = open(logdir+'/'+frunname, 'w')
         print frun
-
 
         commands.getstatusoutput('chmod 777 %s/%s'%(logdir,frunname))
         frun.write('#!/bin/bash\n')
@@ -666,52 +667,34 @@ if __name__=="__main__":
         frun.write('rm $JOBDIR/%s \n'%(outfile))
         frun.close()
 
-        if args.lsf:
-            #cmdBatch="bsub -M 4000000 -R \"pool=40000\" -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
-            if args.addPileupToSignal or args.mergePileup:
-                cmdBatch="bsub  -R 'rusage[mem=40000:pool=8000]' -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
-            else:
-                cmdBatch="bsub  -R 'rusage[mem=20000:pool=8000]' -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)    
-            batchid=-1
-            job,batchid=ut.SubmitToLsf(cmdBatch,10)
-        elif args.no_submit:
+        if args.no_submit:
             job = 0
             print "scripts generated in ", os.path.join(logdir, frunname),
         else:
-            os.system("mkdir -p %s/out"%logdir)
-            os.system("mkdir -p %s/log"%logdir)
-            os.system("mkdir -p %s/err"%logdir)
-            # create also .sub file here
-            fsubname = frunname.replace('.sh','.sub')
-            fsub = None
-            try:
-                fsub = open(logdir+'/'+fsubname, 'w')
-            except IOError as e:
-                print "I/O error({0}): {1}".format(e.errno, e.strerror)
-                time.sleep(10)
-                fsub = open(logdir+'/'+fsubname, 'w')
-            print fsub
-            commands.getstatusoutput('chmod 777 %s/%s'%(logdir,fsubname))
-            fsub.write('executable            = %s/%s\n' %(logdir,frunname))
-            fsub.write('arguments             = $(ClusterID) $(ProcId)\n')
-            fsub.write('output                = %s/out/job.%s.$(ClusterId).$(ProcId).out\n'%(logdir,str(seed)))
-            fsub.write('log                   = %s/log/job.%s.$(ClusterId).log\n'%(logdir,str(seed)))
-            fsub.write('error                 = %s/err/job.%s.$(ClusterId).$(ProcId).err\n'%(logdir,str(seed)))
-            if args.physics:
-                fsub.write('RequestCpus = 8\n')
-            else:
-                fsub.write('RequestCpus = 4\n')
-            fsub.write('requirements = (OpSysAndVer =?= "SLCern6")\n')
-            fsub.write('+JobFlavour = "tomorrow"\n') #"nextweek"\n')
-            fsub.write('+AccountingGroup = "group_u_FCC.local_gen"\n')
-            fsub.write('queue 1\n')
-            fsub.close()
-            cmdBatch="condor_submit %s/%s"%(logdir.replace(current_dir+"/",''),fsubname)
+            args_file.write("%s,%s\n" % (logdir+frunname, seed))
 
-            print cmdBatch
-            batchid=-1
-            job,batchid=ut.SubmitToCondor(cmdBatch,10)
+    args_file.close()            
+    if args.condor:
+        os.system("mkdir -p %s/out"%logdir)
+        os.system("mkdir -p %s/log"%logdir)
+        os.system("mkdir -p %s/err"%logdir)
+                
+        subfile = open(os.path.join(logdir, "condor.sub"), "wb")
+        subfile.write('arguments = $(ClusterID) $(ProcId)\n')
+        subfile.write('output = %s/out/job.$(seed).$(ClusterId).$(ProcId).out\n' % logdir)
+        subfile.write('log = %s/log.job.$(seed).$(ClusterId).$(ProcId).log\n' % logdir)
+        subfile.write('error = %s/err/job.$(seed).$ClusterId).$(ProcId).err\n'  % logdir)
+        if args.physics:
+            subfile.write('RequestCpus = 8\n')
+        else:
+            subfile.write('RequestCpus = 4\n')
+        subfile.write('+JobFlavour = "nextweek"\n')
+        subfile.write('+AccountingGroup = "group_u_FCC.local_gen"\n')
+        subfile.write("queue executable,seed from %s" % os.path.join(logdir, "arguments.txt"))    
+        subfile.close()
 
-        nbjobsSub+=job
-
-    print 'succesfully sent %i  jobs'%nbjobsSub
+        cmdBatch="condor_submit %s/%s"%(logdir.replace(current_dir+"/",''),"condor.sub")
+        
+        print cmdBatch
+        batchid=-1
+        job,batchid=ut.SubmitToCondor(cmdBatch,10)

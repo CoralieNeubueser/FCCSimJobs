@@ -138,6 +138,9 @@ def getJobInfo(argv):
         if '--resegmentHCal' in argv:
             job_type += "resegmentedHCal/"
             short_job_type += "_resegmHCal"
+        if '--split' in argv:
+            job_type += "splitted/"
+            short_job_type += "_split"
         if '--calibrate' in argv:
             job_type += "/calibrated/11_2018/"
             short_job_type += "_calib"
@@ -257,6 +260,7 @@ if __name__=="__main__":
     recoTopoClusterGroup.add_argument('--sigma3', type=int, default=0, help='Energy threshold [in number of sigmas] for last neighbours')
     recoTopoClusterGroup.add_argument('--calibrate', action='store_true', help="Calibrate Topo-cluster")
     recoTopoClusterGroup.add_argument('--benchmark', action='store_true', help="Use cell-wise determined benchmark parameters for calibration of topo-cluster")
+    recoTopoClusterGroup.add_argument('--split', action='store_true', help="Split topo-clusters after building.")
 
     args, _ = parser.parse_known_args()
 
@@ -475,6 +479,8 @@ if __name__=="__main__":
 
     seed=''
     uid=os.path.join(version, job_dir, job_type)
+    args_file = open(os.path.join(logdir, "arguments.txt"), "wb")
+
     for i in xrange(num_jobs):
         if sim:
             seed=ut.getuid()
@@ -523,7 +529,6 @@ if __name__=="__main__":
             frun = open(logdir+'/'+frunname, 'w')
         print frun
 
-
         commands.getstatusoutput('chmod 777 %s/%s'%(logdir,frunname))
         frun.write('#!/bin/bash\n')
         frun.write('unset LD_LIBRARY_PATH\n')
@@ -531,15 +536,12 @@ if __name__=="__main__":
         frun.write('unset PYTHONPATH\n')
         frun.write('export JOBDIR=$PWD\n')
         frun.write('source %s\n' % (path_to_INIT))
-        # workaround for pythia 8 version mismatch in v03/ and earlier
-        if version!='v04':
-            frun.write("export PYTHIA8_XML=/cvmfs/sft.cern.ch/lcg/releases/MCGenerators/pythia8/230-b1563/x86_64-slc6-gcc62-opt/share/Pythia8/xmldoc/\n")
-            frun.write("export PYTHIA8DATA=$PYTHIA8_XML\n")
+        # workaround for pythia 8 version mismatch
+        frun.write("export PYTHIA8_XML=/cvmfs/sft.cern.ch/lcg/releases/MCGenerators/pythia8/230-b1563/x86_64-centos7-gcc62-opt/share/Pythia8/xmldoc/\n")
+        frun.write("export PYTHIA8DATA=$PYTHIA8_XML\n")
 
         # set options to run FCCSW
         run_command = path_to_FCCSW
-        #if version=='v04':
-        #    run_command = "/afs/cern.ch/work/v/vavolkl/public/fcc.cern.ch/sw/fccsw/v0.10/x86_64-centos7-gcc62-opt/"
         common_fccsw_command = '%s/run fccrun.py %s --outName $JOBDIR/%s --numEvents %i'%(run_command,job_options, outfile ,num_events)
         if not magnetic_field:
             common_fccsw_command += ' --bFieldOff'
@@ -549,6 +551,8 @@ if __name__=="__main__":
             common_fccsw_command += ' --addElectronicsNoise'
         elif args.addPileupNoise:
             common_fccsw_command += ' --addPileupNoise --pileup ' + str(args.pileup)
+        if args.split:
+            common_fccsw_command += ' --split'    
         if args.calibrate:
             common_fccsw_command += ' --calibrate'
         elif args.benchmark:
@@ -661,51 +665,34 @@ if __name__=="__main__":
         frun.write('rm $JOBDIR/%s \n'%(outfile))
         frun.close()
 
-        if args.lsf:
-            #cmdBatch="bsub -M 4000000 -R \"pool=40000\" -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
-            if args.addPileupToSignal or args.mergePileup:
-                cmdBatch="bsub  -R 'rusage[mem=40000:pool=8000]' -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)
-            else:
-                cmdBatch="bsub  -R 'rusage[mem=20000:pool=8000]' -q %s -cwd%s %s" %(queue, logdir,logdir+'/'+frunname)    
-            batchid=-1
-            job,batchid=ut.SubmitToLsf(cmdBatch,10)
-        elif args.no_submit:
+        if args.no_submit:
             job = 0
             print "scripts generated in ", os.path.join(logdir, frunname),
         else:
-            os.system("mkdir -p %s/out"%logdir)
-            os.system("mkdir -p %s/log"%logdir)
-            os.system("mkdir -p %s/err"%logdir)
-            # create also .sub file here
-            fsubname = frunname.replace('.sh','.sub')
-            fsub = None
-            try:
-                fsub = open(logdir+'/'+fsubname, 'w')
-            except IOError as e:
-                print "I/O error({0}): {1}".format(e.errno, e.strerror)
-                time.sleep(10)
-                fsub = open(logdir+'/'+fsubname, 'w')
-            print fsub
-            commands.getstatusoutput('chmod 777 %s/%s'%(logdir,fsubname))
-            fsub.write('executable            = %s/%s\n' %(logdir,frunname))
-            fsub.write('arguments             = $(ClusterID) $(ProcId)\n')
-            fsub.write('output                = %s/out/job.%s.$(ClusterId).$(ProcId).out\n'%(logdir,str(seed)))
-            fsub.write('log                   = %s/log/job.%s.$(ClusterId).log\n'%(logdir,str(seed)))
-            fsub.write('error                 = %s/err/job.%s.$(ClusterId).$(ProcId).err\n'%(logdir,str(seed)))
-            if args.physics:
-                fsub.write('RequestCpus = 8\n')
-            else:
-                fsub.write('RequestCpus = 4\n')
-            fsub.write('+JobFlavour = "nextweek"\n')
-            fsub.write('+AccountingGroup = "group_u_FCC.local_gen"\n')
-            fsub.write('queue 1\n')
-            fsub.close()
-            cmdBatch="condor_submit %s/%s"%(logdir.replace(current_dir+"/",''),fsubname)
+            args_file.write("%s,%s\n" % (logdir+frunname, seed))
 
-            print cmdBatch
-            batchid=-1
-            job,batchid=ut.SubmitToCondor(cmdBatch,10)
+    args_file.close()            
+    if args.condor:
+        os.system("mkdir -p %s/out"%logdir)
+        os.system("mkdir -p %s/log"%logdir)
+        os.system("mkdir -p %s/err"%logdir)
+                
+        subfile = open(os.path.join(logdir, "condor.sub"), "wb")
+        subfile.write('arguments = $(ClusterID) $(ProcId)\n')
+        subfile.write('output = %s/out/job.$(seed).$(ClusterId).$(ProcId).out\n' % logdir)
+        subfile.write('log = %s/log.job.$(seed).$(ClusterId).$(ProcId).log\n' % logdir)
+        subfile.write('error = %s/err/job.$(seed).$ClusterId).$(ProcId).err\n'  % logdir)
+        if args.physics:
+            subfile.write('RequestCpus = 8\n')
+        else:
+            subfile.write('RequestCpus = 4\n')
+        subfile.write('+JobFlavour = "nextweek"\n')
+        subfile.write('+AccountingGroup = "group_u_FCC.local_gen"\n')
+        subfile.write("queue executable,seed from %s" % os.path.join(logdir, "arguments.txt"))    
+        subfile.close()
 
-        nbjobsSub+=job
-
-    print 'succesfully sent %i  jobs'%nbjobsSub
+        cmdBatch="condor_submit %s/%s"%(logdir.replace(current_dir+"/",''),"condor.sub")
+        
+        print cmdBatch
+        batchid=-1
+        job,batchid=ut.SubmitToCondor(cmdBatch,10)

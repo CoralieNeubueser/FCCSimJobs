@@ -173,7 +173,8 @@ hcalFieldValues=[8]
 inputCellCollectionECalBarrel = prefix+"ECalBarrelCells"
 inputCellCollectionHCalBarrel = prefix+"HCalBarrelCells"
 inputCollections = [prefix+"ECalBarrelCells", prefix+"HCalBarrelCells", ]
-inputCollections += ["GenParticles", "GenVertices"] 
+if puEvents==0:
+    inputCollections += ["GenParticles", "GenVertices"] 
 inputNoisePerCell = "/afs/cern.ch/work/c/cneubuse/public/FCChh/cellNoise_map_segHcal_constNoiseLevel.root"
 inputPileupNoisePerCell = "/afs/cern.ch/work/c/cneubuse/public/FCChh/inBfield/cellNoise_map_segHcal_noiseLevelElectronicsPileup_mu"+str(puEvents)+".root"
 inputNeighboursMap = "/afs/cern.ch/work/c/cneubuse/public/FCChh/neighbours_map_segHcal.root"

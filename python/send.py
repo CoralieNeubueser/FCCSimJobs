@@ -692,6 +692,7 @@ if __name__=="__main__":
                 fsub.write('RequestCpus = 8\n')
             else:
                 fsub.write('RequestCpus = 4\n')
+            fsub.write('Requirements = OpSysAndVer =?= "SL6"\n')
             fsub.write('+JobFlavour = "nextweek"\n')
             fsub.write('+AccountingGroup = "group_u_FCC.local_gen"\n')
             fsub.write('queue 1\n')

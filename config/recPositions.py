@@ -145,16 +145,15 @@ rewriteHCalEC.outhits.Path = "newHCalEndcapCells"
 ##############################################################################################################
 
 from Configurables import CreateVolumeCaloPositions,RewriteBitfield,CreateCaloCells
-                   
 rewriteHCal = RewriteBitfield("RewriteHCal",
-                                # old bitfield (readout)
-                                oldReadoutName = "HCalBarrelReadout",
-                                # specify which fields are going to be deleted
-                                removeIds = ["row"],
-                                # new bitfield (readout), with new segmentation
-                                newReadoutName = "BarHCal_Readout_phieta",
-                                debugPrint = 10,
-                                OutputLevel= INFO)
+                              # old bitfield (readout)
+                              oldReadoutName = "HCalBarrelReadout",
+                              # specify which fields are going to be deleted
+                              removeIds = ["row"],
+                              # new bitfield (readout), with new segmentation
+                              newReadoutName = "BarHCal_Readout_phieta",
+                              debugPrint = 10,
+                              OutputLevel= INFO)
 # clusters are needed, with deposit position and cellID in bits
 rewriteHCal.inhits.Path = "HCalBarrelCells"
 rewriteHCal.outhits.Path = "HCalBarrelCellsStep1"
@@ -235,13 +234,18 @@ EMECcells = CellPositionsCaloDiscsTool("CellPositionsEMEC",
 ECalFwdcells = CellPositionsCaloDiscsTool("CellPositionsECalFwd",
                                         readoutName = ecalFwdReadoutName,
                                         OutputLevel = INFO)
-HCalBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrel",
-                                              readoutName = hcalBarrelReadoutName,
+HCalBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrelFullGranTool",
+                                              readoutName = "HCalBarrelReadout",
+                                              radii = [291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 403.55, 428.55, 453.55],
                                               OutputLevel = INFO)
-HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrel",
+#CellPositionsHCalBarrelNoSegTool("CellPositionsHCalBarrel",
+#                                              readoutName = hcalBarrelReadoutName,
+#                                              OutputLevel = INFO)
+HCalExtBcells = CellPositionsHCalBarrelNoSegTool("CellPositionsHCalExtBarrelFullGranTool",
+                                                 radii = [291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 403.55, 428.55, 453.55], 
                                                  readoutName = hcalExtBarrelReadoutName,
                                                  OutputLevel = INFO)
-HCalBsegcells = CellPositionsHCalBarrelTool("CellPositionsHCalSegBarrel",
+HCalBsegcells = CellPositionsHCalBarrelTool("CellPositionsHCalBarrel",
                                             readoutName = hcalBarrelReadoutNamePhiEta,
                                             radii = [291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 403.55, 428.55, 453.55],
                                             OutputLevel = INFO)
@@ -434,12 +438,14 @@ if addMuons:
 out.AuditExecute = True
 
 list_of_algorithms = [podioinput]
+#, 
+#                      rewriteHCal,                                                                                                                                                                                                               createHcalBarrelCells]
 
 if resegmentHCal and not noise:
     list_of_algorithms += [
-        rewriteHCal,
-        rewriteExtHCal,
+        rewriteHCal,        
         createHcalBarrelCells,
+        rewriteExtHCal,
         createHcalExtBarrelCells,
         ]
     if simargs.cone:

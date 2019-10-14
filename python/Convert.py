@@ -14,7 +14,7 @@ if result < 0:
 
 system_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4")
 ecalBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,cryo:1,type:3,subtype:3,layer:8,eta:9,phi:10")
-hcalBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,module:8,row:9,layer:5")
+hcalBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,layer:5,row:9,eta:0,phi:10")
 hcalExtBarrel_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,module:8,row:9,layer:5")
 ecalEndcap_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:10,phi:10")
 hcalEndcap_decoder = dd4hep.DDSegmentation.BitFieldCoder("system:4,subsystem:1,type:3,subtype:3,layer:8,eta:10,phi:10")
@@ -259,7 +259,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                     track_bits.push_back(g.bits())
 
                     if math.fabs(tlv.E()-math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2))>0.01:
-                        print '=======================etlv  ',tlv.E(),'    ',math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2),'  eta  ',eta,'   phi   ',phi,'  x  ',g.p4().px,'  y  ',g.p4().py,'  z  ',g.p4().pz
+                        print ('=======================etlv  ',tlv.E(),'    ',math.sqrt(g.p4().mass**2+g.p4().px**2+g.p4().py**2+g.p4().pz**2),'  eta  ',eta,'   phi   ',phi,'  x  ',g.p4().px,'  y  ',g.p4().py,'  z  ',g.p4().pz)
 
                     track_pdgid.push_back(g.pdgId())
                     track_status.push_back(g.status())
@@ -285,6 +285,7 @@ with EventStore([infile_name]) as evs: # p.ex output of Examples/options/simple_
                 cluster_ene.push_back(c.energy())
                 cluster_eta.push_back(position.Eta())
                 cluster_phi.push_back(position.Phi())
+                # c.energy()*position.Unit().Perp() == c.energy()/math.cosh(position.Eta())
                 cluster_pt.push_back(c.energy()*position.Unit().Perp())
                 cluster_x.push_back(c.position().x/10.)
                 cluster_y.push_back(c.position().y/10.)

@@ -402,15 +402,15 @@ if __name__=="__main__":
     rundir = os.getcwd()
     nbjobsSub=0
 
-    if args.mergePileup and not args.local == "inits/reco.py":
+    if args.mergePileup and not args.local == "inits/reco.py" and not args.local == "inits/newTileCal.py":
         warning("Please note that '--mergePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
-    if args.addPileupToSignal and not args.local == "inits/reco.py":
+    if args.addPileupToSignal and not args.local == "inits/reco.py" and not args.local == "inits/newTileCal.py":
         warning("Please note that '--addPileupToSignal' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
-    if args.estimatePileup and not args.local == "inits/reco.py":
+    if args.estimatePileup and not args.local == "inits/reco.py" and not args.local == "inits/newTileCal.py":
         warning("Please note that '--preparePileup' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
-    if args.recPositions and not args.local == "inits/reco.py":
+    if args.recPositions and not args.local == "inits/reco.py" and not args.local == "inits/newTileCal.py":
         warning("Please note that '--recPositions' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py')", True)
-    if args.recTopoClusters and not (args.local == "inits/reco.py" or args.local == "inits/calibrateCluster.py"):
+    if args.recTopoClusters and not (args.local == "inits/reco.py" or args.local == "inits/calibrateCluster.py" or args.local == "inits/newTileCal.py"):
         warning("Please note that '--recTopoClusters' is not supported for FCCSW v0.9.1. Make sure that you use suitable software version (recommended: '--local inits/reco.py', '--local inits/calibrateCluster.py')", True)
     if args.recTopoClusters and args.numEvents != -1:
         warning("Please note that '--recTopoClusters' is not run on all events available in simu (recommended: '--n -1')", True)
@@ -536,8 +536,6 @@ if __name__=="__main__":
         frun.write('unset PYTHONPATH\n')
         frun.write('export JOBDIR=$PWD\n')
         frun.write('source %s\n' % (path_to_INIT))
-        # workaround for pythia 8 version mismatch
-        frun.write("export PYTHIA8_XML=/cvmfs/sft.cern.ch/lcg/releases/MCGenerators/pythia8/230-b1563/x86_64-centos7-gcc62-opt/share/Pythia8/xmldoc/\n")
         frun.write("export PYTHIA8DATA=$PYTHIA8_XML\n")
 
         # set options to run FCCSW
@@ -688,6 +686,7 @@ if __name__=="__main__":
             subfile.write('RequestCpus = 4\n')
         subfile.write('+JobFlavour = "nextweek"\n')
         subfile.write('+AccountingGroup = "group_u_FCC.local_gen"\n')
+#        subfile.write('+AccountingGroup = "group_u_ILC.u_zf"\n')
         subfile.write("queue executable,seed from %s" % os.path.join(logdir, "arguments.txt"))    
         subfile.close()
 

@@ -129,9 +129,7 @@ from Gaudi.Configuration import *
 #######                                         GEOMETRY                                         #############
 ##############################################################################################################
 
-detectors_to_use=[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectEmptyMaster.xml',
-                  path_to_detector+'/Detector/DetFCChhECalInclined/compact/FCChh_ECalBarrel_withCryostat.xml',
-                  path_to_detector+'/Detector/DetFCChhHCalTile/compact/FCChh_HCalBarrel_TileCal.xml']
+detectors_to_use =[path_to_detector+'/Detector/DetFCChhBaseline1/compact/FCChh_DectMaster.xml']
 
 from Configurables import GeoSvc
 geoservice = GeoSvc("GeoSvc", detectors = detectors_to_use, OutputLevel = WARNING)
@@ -234,6 +232,22 @@ HCalBsegcells = CellPositionsHCalBarrelTool("CellPositionsHCalBarrel",
                                             readoutName = "BarHCal_Readout_phieta",
                                             radii = [291.05, 301.05, 313.55, 328.55, 343.55, 358.55, 378.55, 413.55, 428.55, 453.55],
                                             OutputLevel = INFO)
+HCalExtBcells =CellPositionsHCalBarrelTool("CellPositionsHCalExtBarrel",
+                                           readoutName = hcalExtBarrelReadoutName,
+                                           radii = [ 356.05
+                                                     , 373.55
+                                                     , 398.55
+                                                     , 423.55
+                                                     , 291.05
+                                                     , 301.05
+                                                     , 313.55
+                                                     , 328.55
+                                                     , 348.55
+                                                     , 373.55
+                                                     , 398.55
+                                                     , 423.55
+                                                     ],                                           
+                                           OutputLevel = INFO) 
 HECcells = CellPositionsCaloDiscsTool("CellPositionsHEC",
                                       readoutName = hcalEndcapReadoutName,
                                       OutputLevel = INFO)
@@ -475,6 +489,11 @@ if elNoise and not puNoise:
                                               positionsECalBarrelTool = ECalBcells,
                                               positionsHCalBarrelTool = HCalBsegcells,
                                               positionsHCalBarrelNoSegTool = HCalBcellVols,
+                                              positionsHCalExtBarrelTool = HCalExtBcells,
+                                              positionsEMECTool = EMECcells,
+                                              positionsHECTool = HECcells,
+                                              positionsEMFwdTool = ECalFwdcells,
+                                              positionsHFwdTool = HCalFwdcells,
                                               noSegmentationHCal = noSegmentationHCal,
                                               seedSigma = sigma1,
                                               neighbourSigma = sigma2,
@@ -657,6 +676,11 @@ if puNoise:
                                               positionsECalBarrelTool = ECalBcells,
                                               positionsHCalBarrelTool = HCalBsegcells,
                                               positionsHCalBarrelNoSegTool = HCalBcellVols,
+                                              positionsHCalExtBarrelTool = HCalExtBcells,
+                                              positionsEMECTool = EMECcells,
+                                              positionsHECTool = HECcells,
+                                              positionsEMFwdTool = ECalFwdcells,
+                                              positionsHFwdTool = HCalFwdcells,
                                               noSegmentationHCal = noSegmentationHCal,
                                               seedSigma = sigma1,
                                               neighbourSigma = sigma2,
